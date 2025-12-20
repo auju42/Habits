@@ -81,6 +81,35 @@ export const logJuzReview = async (userId: string, juzNumber: number, date: stri
     }
 };
 
+export const removePageMemorization = async (userId: string, pageNumber: number, progress: QuranProgress | null) => {
+    if (!progress?.memorizedPages?.[pageNumber]) return;
+
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
+    const currentMemorized = { ...progress.memorizedPages };
+    delete currentMemorized[pageNumber];
+
+    await setDoc(docRef, {
+        memorizedPages: currentMemorized,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+};
+
+export const removeJuzReview = async (userId: string, juzNumber: number, date: string, progress: QuranProgress | null) => {
+    if (!progress?.juzReviews?.[juzNumber]) return;
+
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
+    const currentReviews = { ...progress.juzReviews };
+    const currentJuzReviews = currentReviews[juzNumber] || [];
+
+    const newJuzReviews = currentJuzReviews.filter(d => d !== date);
+    currentReviews[juzNumber] = newJuzReviews;
+
+    await setDoc(docRef, {
+        juzReviews: currentReviews,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+};
+
 const updateLinkedHabit = async (userId: string, habitName: string, date: string) => {
     // Find the habit by name
     const q = query(
