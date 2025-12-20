@@ -36,6 +36,16 @@ export default function Login() {
                     />
                     Sign in with Google
                 </button>
+
+                <div className="mt-4 flex flex-col items-center">
+                    <div className="text-gray-500 text-sm mb-3">or</div>
+                    <button
+                        onClick={useAuth().signInAsGuest}
+                        className="text-gray-400 hover:text-white text-sm font-medium transition duration-200 underline underline-offset-4"
+                    >
+                        Continue as Guest
+                    </button>
+                </div>
             </div>
         </div>
     );

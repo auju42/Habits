@@ -7,6 +7,7 @@ interface AuthContextType {
     loading: boolean;
     accessToken: string | null;
     signInWithGoogle: () => Promise<void>;
+    signInAsGuest: () => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -41,6 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const signInAsGuest = async () => {
+        try {
+            // Dynamically import to keep bundle size optimized if desired, though standard import is fine here
+            const { signInAnonymously } = await import('firebase/auth');
+            await signInAnonymously(auth);
+        } catch (error) {
+            console.error("Error signing in as guest", error);
+            throw error;
+        }
+    };
+
     const logout = async () => {
         await signOut(auth);
         setAccessToken(null);
@@ -52,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         accessToken,
         signInWithGoogle,
+        signInAsGuest,
         logout
     };
 
