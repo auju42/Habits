@@ -26,7 +26,9 @@ export const createCalendarEvent = async (accessToken: string, task: { title: st
         });
 
         if (!response.ok) {
-            throw new Error('Failed to create Google Calendar event');
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Google Calendar API error:', response.status, errorData);
+            throw new Error(`Failed to create Google Calendar event: ${errorData?.error?.message || response.statusText}`);
         }
 
         const data = await response.json();
