@@ -3,7 +3,7 @@ import { X, Upload, FileText, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { markPageAsMemorized } from '../../services/quranService';
 import type { QuranProgress } from '../../types/quran';
-import { JUZ_START_PAGES, getJuzPageRange } from '../../types/quran';
+import { getJuzPageRange } from '../../types/quran';
 
 interface Props {
     userId: string;
@@ -97,8 +97,8 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
                         <button
                             onClick={() => setImportMode('juz')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition ${importMode === 'juz'
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                 }`}
                         >
                             <FileText size={16} />
@@ -107,8 +107,8 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
                         <button
                             onClick={() => setImportMode('pages')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition ${importMode === 'pages'
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                 }`}
                         >
                             <FileText size={16} />

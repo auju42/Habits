@@ -23,7 +23,7 @@ export default function JuzPagesModal({ juzNumber, progress, onMarkPage, onRemov
     const [selectedPage, setSelectedPage] = useState<number | null>(null);
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-    const { start, end, total } = getJuzPageRange(juzNumber);
+    const { start, total } = getJuzPageRange(juzNumber);
     const pages = Array.from({ length: total }, (_, i) => start + i);
 
     let memorizedCount = 0;

@@ -33,12 +33,7 @@ export default function MemorizationCalendarView({ progress }: Props) {
         return sum + (pagesPerDay[dateStr] || 0);
     }, 0);
 
-    // Get recent 3 months data for mini view
-    const months = [
-        subMonths(currentMonth, 2),
-        subMonths(currentMonth, 1),
-        currentMonth
-    ];
+    // Get recent 3 months data for mini view (logic removed as unused)
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
