@@ -1,18 +1,13 @@
 import { db } from '../lib/firebase';
 import {
-    collection,
     doc,
     setDoc,
+    updateDoc,
+    deleteField,
     onSnapshot,
     serverTimestamp,
-    getDocs,
-    query,
-    where,
-    limit
 } from 'firebase/firestore';
-import type { QuranProgress } from '../types/quran';
-import { addHabit, setHabitCompletion } from './habitService';
-import type { Habit } from '../types';
+import type { QuranProgress, JuzStrength } from '../types/quran';
 
 const COLLECTION_NAME = 'quran_progress';
 
@@ -34,6 +29,7 @@ export const initializeQuranProgress = async (userId: string) => {
         userId,
         memorizedPages: {},
         juzReviews: {},
+        juzStrengths: {},
         updatedAt: serverTimestamp()
     });
 };
@@ -52,9 +48,6 @@ export const markPageAsMemorized = async (userId: string, pageNumber: number, da
         memorizedPages: newMemorized,
         updatedAt: serverTimestamp()
     }, { merge: true });
-
-    // Update "Memorize a page" habit
-    await updateLinkedHabit(userId, "Memorize a page", date);
 };
 
 export const logJuzReview = async (userId: string, juzNumber: number, date: string, progress: QuranProgress | null) => {
@@ -75,9 +68,6 @@ export const logJuzReview = async (userId: string, juzNumber: number, date: stri
             juzReviews: newReviews,
             updatedAt: serverTimestamp()
         }, { merge: true });
-
-        // Update "Review a Juz" habit
-        await updateLinkedHabit(userId, "Review a Juz", date);
     }
 };
 
@@ -85,13 +75,12 @@ export const removePageMemorization = async (userId: string, pageNumber: number,
     if (!progress?.memorizedPages?.[pageNumber]) return;
 
     const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
-    const currentMemorized = { ...progress.memorizedPages };
-    delete currentMemorized[pageNumber];
 
-    await setDoc(docRef, {
-        memorizedPages: currentMemorized,
+    // Use deleteField to remove the specific key from the map
+    await updateDoc(docRef, {
+        [`memorizedPages.${pageNumber}`]: deleteField(),
         updatedAt: serverTimestamp()
-    }, { merge: true });
+    });
 };
 
 export const removeJuzReview = async (userId: string, juzNumber: number, date: string, progress: QuranProgress | null) => {
@@ -110,34 +99,59 @@ export const removeJuzReview = async (userId: string, juzNumber: number, date: s
     }, { merge: true });
 };
 
-const updateLinkedHabit = async (userId: string, habitName: string, date: string) => {
-    // Find the habit by name
-    const q = query(
-        collection(db, `users/${userId}/habits`),
-        where('name', '==', habitName),
-        limit(1)
-    );
-    const snapshot = await getDocs(q);
+export const setJuzStrength = async (userId: string, juzNumber: number, strength: JuzStrength, progress: QuranProgress | null) => {
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
 
-    let habit: Habit;
-
-    if (snapshot.empty) {
-        // Create if doesn't exist. Note: Since we need the ID to update, we'll create it now.
-        // But addHabit is async and we need to wait for it.
-        // Actually simplest is to just create it.
-        await addHabit(userId, habitName, 'simple');
-        // Now fetch it again to be safe and get the ID? Or simpler, addHabit creates it.
-        // Ideally we should probably ensure these habits exist on app start or first use of feature.
-        // For now, let's try to fetch again or just creating one means next time we find it.
-        // Wait, addHabit returns void in current implementation? Let's check.
-        // Yes it returns void. 
-        // Let's fetch again.
-        const retrySnapshot = await getDocs(q);
-        if (retrySnapshot.empty) return; // Should not happen
-        habit = { id: retrySnapshot.docs[0].id, ...retrySnapshot.docs[0].data() } as Habit;
-    } else {
-        habit = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Habit;
+    if (!progress) {
+        await initializeQuranProgress(userId);
     }
 
-    await setHabitCompletion(userId, habit, date, true);
-}
+    const currentStrengths = progress?.juzStrengths || {};
+    const newStrengths = { ...currentStrengths, [juzNumber]: strength };
+
+
+    await setDoc(docRef, {
+        juzStrengths: newStrengths,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+};
+
+export const logHizbReview = async (userId: string, hizbNumber: number, date: string, progress: QuranProgress | null) => {
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
+
+    if (!progress) {
+        await initializeQuranProgress(userId);
+    }
+
+    const currentHizbReviews = progress?.hizbReviews || {};
+    const reviewsForHizb = currentHizbReviews[hizbNumber] || [];
+
+    if (!reviewsForHizb.includes(date)) {
+        const newReviewsForHizb = [...reviewsForHizb, date].sort();
+        const newHizbReviews = { ...currentHizbReviews, [hizbNumber]: newReviewsForHizb };
+
+        // Also update parent Juz review if both Hizbs are done? 
+        // For now, we just track Hizbs. The UI will determine if the "Juz" is reviewed.
+
+        await setDoc(docRef, {
+            hizbReviews: newHizbReviews,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    }
+};
+
+export const removeHizbReview = async (userId: string, hizbNumber: number, date: string, progress: QuranProgress | null) => {
+    if (!progress?.hizbReviews?.[hizbNumber]) return;
+
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
+    const currentHizbReviews = { ...progress.hizbReviews };
+    const reviewsForHizb = currentHizbReviews[hizbNumber] || [];
+
+    const newReviewsForHizb = reviewsForHizb.filter(d => d !== date);
+    currentHizbReviews[hizbNumber] = newReviewsForHizb;
+
+    await setDoc(docRef, {
+        hizbReviews: currentHizbReviews,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+};

@@ -3,17 +3,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress } from '../services/habitService';
 import type { Habit } from '../types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isToday, addMonths, subMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Ban, Shield, PenTool } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Ban, PenTool } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-type ViewMode = 'all' | 'individual';
+type ViewMode = 'overview' | 'detailed';
 
 export default function Calendar() {
     const { user } = useAuth();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [viewMode, setViewMode] = useState<ViewMode>('all');
+    const [viewMode, setViewMode] = useState<ViewMode>('detailed'); // Default to detailed
     const [isEditMode, setIsEditMode] = useState(false);
 
     useEffect(() => {
@@ -32,7 +32,6 @@ export default function Calendar() {
             if (habit.habitType === 'simple') {
                 await toggleHabitCompletion(user.uid, habit, dateStr);
             } else {
-                // For count habits, increment on click
                 await incrementHabitProgress(user.uid, habit, dateStr);
             }
         } catch (error) {
@@ -78,20 +77,15 @@ export default function Calendar() {
                         <PenTool className="w-4 h-4" />
                         {isEditMode ? 'Edit Mode ON' : 'Edit Mode'}
                     </button>
-                    {isEditMode && (
-                        <span className="text-xs text-blue-600 dark:text-blue-400 animate-pulse">
-                            Click dates to edit
-                        </span>
-                    )}
                 </div>
 
                 {/* View Mode Toggle */}
                 <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 self-start xl:self-auto">
                     <button
-                        onClick={() => setViewMode('all')}
+                        onClick={() => setViewMode('overview')}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                            viewMode === 'all'
+                            viewMode === 'overview'
                                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                         )}
@@ -100,10 +94,10 @@ export default function Calendar() {
                         Overview
                     </button>
                     <button
-                        onClick={() => setViewMode('individual')}
+                        onClick={() => setViewMode('detailed')}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                            viewMode === 'individual'
+                            viewMode === 'detailed'
                                 ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                         )}
@@ -134,10 +128,10 @@ export default function Calendar() {
             </div>
 
             {/* Calendar Views */}
-            {viewMode === 'all' ? (
-                // VIEW MODE: ALL (Overview)
+            {viewMode === 'overview' ? (
+                // VIEW MODE: OVERVIEW - Compact dots only, no dates visible
                 <>
-                    {/* Habit Coloring Legend */}
+                    {/* Habit Legend */}
                     {habits.length > 0 && (
                         <div className="flex flex-wrap gap-3 mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                             {habits.map(habit => (
@@ -156,79 +150,41 @@ export default function Calendar() {
                         </div>
                     )}
 
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                        <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                                <div key={i} className="py-3 text-center text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50">
-                                    <span className="hidden sm:inline">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i]}</span>
-                                    <span className="sm:hidden">{day}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-7">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden p-4">
+                        {/* Compact grid - no day headers, just dots */}
+                        <div className="grid grid-cols-7 gap-0.5">
                             {days.map((day) => {
                                 const dateStr = format(day, 'yyyy-MM-dd');
                                 const isCurrentMonth = isSameMonth(day, currentMonth);
                                 const isDayToday = isToday(day);
 
+                                if (!isCurrentMonth) {
+                                    return <div key={dateStr} className="aspect-square" />;
+                                }
+
                                 return (
                                     <div
                                         key={dateStr}
                                         className={cn(
-                                            "min-h-[60px] sm:min-h-[100px] p-1 sm:p-2 border-b border-r border-gray-100 dark:border-gray-700/50 transition-colors",
-                                            !isCurrentMonth && "bg-gray-50 dark:bg-gray-800/30",
-                                            isDayToday && "bg-blue-50 dark:bg-blue-900/20"
+                                            "aspect-square flex items-center justify-center p-0.5",
+                                            isDayToday && "bg-blue-50 dark:bg-blue-900/20 rounded"
                                         )}
                                     >
-                                        <div className={cn(
-                                            "text-xs sm:text-sm font-medium mb-1",
-                                            !isCurrentMonth && "text-gray-400 dark:text-gray-600",
-                                            isCurrentMonth && "text-gray-700 dark:text-gray-300",
-                                            isDayToday && "text-blue-600 dark:text-blue-400"
-                                        )}>
-                                            {format(day, 'd')}
-                                        </div>
-                                        <div className="flex flex-wrap gap-0.5">
+                                        <div className="flex flex-wrap gap-0.5 justify-center">
                                             {habits.map(habit => {
                                                 const isCompleted = habit.completedDates?.includes(dateStr);
                                                 const countProgress = habit.dailyProgress?.[dateStr] || 0;
                                                 const dailyGoal = habit.dailyGoal || 1;
 
-                                                // Calculate completion based on type
                                                 let showAsComplete = false;
                                                 if (habit.habitType === 'simple') {
                                                     showAsComplete = isCompleted || false;
                                                 } else {
-                                                    // Count Logic
                                                     if (habit.isQuitting) {
-                                                        showAsComplete = countProgress <= dailyGoal; // Under limit = Good
+                                                        showAsComplete = countProgress <= dailyGoal;
                                                     } else {
-                                                        showAsComplete = countProgress >= dailyGoal; // Met goal = Good
+                                                        showAsComplete = countProgress >= dailyGoal;
                                                     }
-                                                }
-
-                                                // Determine color
-                                                let bgColor = "bg-gray-300 dark:bg-gray-600";
-                                                if (habit.isQuitting) {
-                                                    // Quitting Habit
-                                                    // Good (Under limit): Green
-                                                    // Bad (Over limit): Red
-                                                    if (habit.habitType === 'count') {
-                                                        bgColor = showAsComplete ? "bg-green-500" : "bg-red-500";
-                                                    } else {
-                                                        // Simple Quitting
-                                                        // Completed (Avoided): Green
-                                                        // Not Completed (Did it): Red (but usually unchecked is default state for simple)
-                                                        // Wait, for simple quitting: checked means "Avoided" (Good -> Green). Unchecked means nothing/neutral?
-                                                        // Or does unchecked mean "Failed"? Usually unchecked means "didn't track" or "failed".
-                                                        // Let's stick to standard: Checked = Good (Green).
-                                                        bgColor = showAsComplete ? "bg-green-500" : "bg-red-400 opacity-60";
-                                                    }
-                                                } else {
-                                                    // Building Habit
-                                                    // Good (Met goal): Green
-                                                    // Bad (Not met): Gray/Red
-                                                    bgColor = showAsComplete ? "bg-green-500" : "bg-red-400 opacity-60";
                                                 }
 
                                                 return (
@@ -237,11 +193,11 @@ export default function Calendar() {
                                                         disabled={!isEditMode}
                                                         onClick={() => handleDayClick(habit, dateStr)}
                                                         className={cn(
-                                                            "w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 rounded-full flex items-center justify-center text-[6px] sm:text-[8px] font-bold transition-all",
-                                                            bgColor,
-                                                            isEditMode && "hover:ring-2 hover:ring-offset-1 ring-blue-500 cursor-pointer hover:scale-110"
+                                                            "w-1.5 h-1.5 rounded-full transition-all",
+                                                            showAsComplete ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600",
+                                                            isEditMode && "hover:scale-150 cursor-pointer"
                                                         )}
-                                                        title={`${habit.name}: ${showAsComplete ? (habit.isQuitting ? 'Good' : 'Completed') : 'Not completed'}`}
+                                                        title={`${habit.name}: ${showAsComplete ? 'Done' : 'Not done'}`}
                                                     />
                                                 );
                                             })}
@@ -272,18 +228,17 @@ export default function Calendar() {
                                 </div>
                             </div>
 
-                            {/* Mini Calendar Grid for this Habit */}
+                            {/* Mini Calendar Grid - compact dots only */}
                             <div className="p-4">
-                                <div className="grid grid-cols-7 mb-2">
-                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                                        <div key={d} className="text-center text-xs text-gray-400 font-medium">{d}</div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-7 gap-1">
+                                <div className="grid grid-cols-7 gap-0.5">
                                     {days.map((day) => {
                                         const dateStr = format(day, 'yyyy-MM-dd');
                                         const isCurrentMonth = isSameMonth(day, currentMonth);
                                         const isDayToday = isToday(day);
+
+                                        if (!isCurrentMonth) {
+                                            return <div key={dateStr} className="aspect-square" />;
+                                        }
 
                                         const isCompleted = habit.completedDates?.includes(dateStr);
                                         const countProgress = habit.dailyProgress?.[dateStr] || 0;
@@ -303,38 +258,18 @@ export default function Calendar() {
                                         return (
                                             <button
                                                 key={dateStr}
-                                                disabled={!isEditMode && !isCurrentMonth}
-                                                onClick={() => isCurrentMonth && handleDayClick(habit, dateStr)}
+                                                disabled={!isEditMode}
+                                                onClick={() => handleDayClick(habit, dateStr)}
                                                 className={cn(
-                                                    "aspect-square rounded-md flex items-center justify-center text-xs transition-all relative group",
-                                                    !isCurrentMonth && "opacity-0 pointer-events-none",
-                                                    isCurrentMonth && (
-                                                        showAsComplete
-                                                            ? habit.isQuitting
-                                                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold border border-green-200 dark:border-green-800"
-                                                                : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold border border-green-200 dark:border-green-800"
-                                                            : isDayToday
-                                                                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 font-semibold border border-blue-200 dark:border-blue-800"
-                                                                : "bg-gray-50 dark:bg-gray-800/50 text-gray-400"
-                                                    ),
-                                                    isEditMode && isCurrentMonth && "hover:ring-2 hover:ring-offset-1 ring-blue-500 cursor-pointer hover:scale-110"
+                                                    "aspect-square rounded flex items-center justify-center transition-all",
+                                                    showAsComplete
+                                                        ? "bg-green-500"
+                                                        : "bg-gray-200 dark:bg-gray-700",
+                                                    isDayToday && "ring-2 ring-blue-500 ring-offset-1",
+                                                    isEditMode && "hover:scale-110 cursor-pointer"
                                                 )}
-                                                title={isCurrentMonth ? `${format(day, 'MMM d')}: ${habit.habitType === 'count' ? countProgress : (showAsComplete ? 'Done' : 'Not done')}` : ''}
-                                            >
-                                                {isCurrentMonth && (
-                                                    <>
-                                                        <span>{format(day, 'd')}</span>
-                                                        {habit.isQuitting && showAsComplete && (
-                                                            <Shield className="w-3 h-3 absolute -top-1 -right-1 text-green-500 fill-green-100" />
-                                                        )}
-                                                        {habit.habitType === 'count' && countProgress > 0 && (
-                                                            <div className="absolute bottom-0.5 right-0.5 text-[0.6rem] leading-none text-gray-500 font-normal">
-                                                                {countProgress}
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </button>
+                                                title={`${format(day, 'MMM d')}: ${showAsComplete ? 'Done' : 'Not done'}`}
+                                            />
                                         );
                                     })}
                                 </div>
