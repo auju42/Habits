@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Stats from './pages/Stats';
 import Calendar from './pages/Calendar';
 import Tasks from './pages/Tasks';
+import QuranTracker from './pages/QuranTracker';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/tasks" element={<Tasks />} />
+                <Route path="/quran" element={<QuranTracker />} />
               </Route>
             </Route>
 

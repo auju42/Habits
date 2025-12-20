@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { LogOut, LayoutGrid, BarChart2, Moon, Sun, CalendarDays, CheckSquare, Menu, X } from 'lucide-react';
+import { LogOut, LayoutGrid, BarChart2, Moon, Sun, CalendarDays, CheckSquare, Menu, X, BookOpen } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Navbar() {
@@ -16,6 +16,7 @@ export default function Navbar() {
         { to: '/', icon: LayoutGrid, label: 'Dashboard' },
         { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
         { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
+        { to: '/quran', icon: BookOpen, label: 'Hifz' },
         { to: '/stats', icon: BarChart2, label: 'Statistics' },
     ];
 
@@ -36,8 +37,8 @@ export default function Navbar() {
                                     key={to}
                                     to={to}
                                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${location.pathname === to
-                                            ? 'border-blue-500 text-gray-900 dark:text-white'
-                                            : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
+                                        ? 'border-blue-500 text-gray-900 dark:text-white'
+                                        : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4 mr-2" />
@@ -100,8 +101,8 @@ export default function Navbar() {
                                 to={to}
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className={`flex items-center px-4 py-3 text-base font-medium ${location.pathname === to
-                                        ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 text-blue-700 dark:text-blue-300'
-                                        : 'border-l-4 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white'
+                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 text-blue-700 dark:text-blue-300'
+                                    : 'border-l-4 border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white'
                                     }`}
                             >
                                 <Icon className="w-5 h-5 mr-3" />

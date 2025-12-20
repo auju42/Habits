@@ -79,6 +79,29 @@ export const toggleHabitCompletion = async (userId: string, habit: Habit, date: 
     });
 };
 
+export const setHabitCompletion = async (userId: string, habit: Habit, date: string, isCompleted: boolean) => {
+    const habitRef = doc(db, `users/${userId}/${COLLECTION_NAME}/${habit.id}`);
+
+    let newCompletedDates = [...(habit.completedDates || [])];
+    const alreadyCompleted = newCompletedDates.includes(date);
+
+    if (isCompleted && !alreadyCompleted) {
+        newCompletedDates.push(date);
+        newCompletedDates.sort();
+    } else if (!isCompleted && alreadyCompleted) {
+        newCompletedDates = newCompletedDates.filter(d => d !== date);
+    } else {
+        return; // No change needed
+    }
+
+    const streak = calculateStreak(newCompletedDates);
+
+    await updateDoc(habitRef, {
+        completedDates: newCompletedDates,
+        streak
+    });
+};
+
 // For count habits: increment progress
 export const incrementHabitProgress = async (userId: string, habit: Habit, date: string) => {
     const habitRef = doc(db, `users/${userId}/${COLLECTION_NAME}/${habit.id}`);
