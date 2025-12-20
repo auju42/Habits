@@ -10,7 +10,7 @@ import { format, parseISO } from 'date-fns';
 import { cn } from '../lib/utils';
 
 export default function Dashboard() {
-    const { user } = useAuth();
+    const { user, accessToken } = useAuth();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -59,9 +59,9 @@ export default function Dashboard() {
         await deleteHabit(user.uid, habitId);
     };
 
-    const handleToggleTask = async (taskId: string, completed: boolean) => {
+    const handleToggleTask = async (task: Task) => {
         if (!user) return;
-        await toggleTaskCompletion(user.uid, taskId, completed);
+        await toggleTaskCompletion(user.uid, task, accessToken);
     };
 
     // Today's data
@@ -229,7 +229,7 @@ export default function Dashboard() {
                                         className="flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                     >
                                         <button
-                                            onClick={() => handleToggleTask(task.id, task.completed)}
+                                            onClick={() => handleToggleTask(task)}
                                             className={cn(
                                                 "w-5 h-5 rounded-full border-2 flex-shrink-0 transition-all",
                                                 task.completed

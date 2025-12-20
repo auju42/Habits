@@ -5,6 +5,7 @@ import { auth } from '../lib/firebase';
 interface AuthContextType {
     user: User | null;
     loading: boolean;
+    accessToken: string | null;
     signInWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
 }
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('google_access_token'));
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -25,19 +27,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signInWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/calendar.events');
         try {
-            await signInWithPopup(auth, provider);
+            const result = await signInWithPopup(auth, provider);
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            if (credential?.accessToken) {
+                setAccessToken(credential.accessToken);
+                localStorage.setItem('google_access_token', credential.accessToken);
+            }
         } catch (error) {
             console.error("Error signing in with Google", error);
             throw error;
         }
     };
 
-    const logout = () => signOut(auth);
+    const logout = async () => {
+        await signOut(auth);
+        setAccessToken(null);
+        localStorage.removeItem('google_access_token');
+    };
 
     const value = {
         user,
         loading,
+        accessToken,
         signInWithGoogle,
         logout
     };

@@ -36,4 +36,7 @@ export interface Task {
     priority: 'low' | 'medium' | 'high';
     dueDate?: string; // YYYY-MM-DD
     createdAt: number; // Timestamp
+    googleCalendarEventId?: string;
+    recurrence?: 'daily' | 'weekly' | 'monthly' | 'none';
+    isRecurring?: boolean;
 }

@@ -1,12 +1,12 @@
-import { Check, Trash2, Calendar } from 'lucide-react';
+import { Check, Trash2, Calendar, RefreshCw } from 'lucide-react';
 import type { Task } from '../types';
 import { cn } from '../lib/utils';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 
 interface TaskCardProps {
     task: Task;
-    onToggle: (taskId: string, completed: boolean) => void;
-    onDelete: (taskId: string) => void;
+    onToggle: () => void;
+    onDelete: () => void;
 }
 
 const priorityColors = {
@@ -30,7 +30,7 @@ export default function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
         )}>
             <div className="flex items-start gap-4">
                 <button
-                    onClick={() => onToggle(task.id, task.completed)}
+                    onClick={onToggle}
                     className={cn(
                         "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-all",
                         task.completed
@@ -73,11 +73,18 @@ export default function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
                                 {isDueToday && !task.completed && ' (today)'}
                             </span>
                         )}
+
+                        {task.isRecurring && (
+                            <span className="text-xs flex items-center gap-1 text-blue-500 dark:text-blue-400">
+                                <RefreshCw className="w-3 h-3" />
+                                {task.recurrence}
+                            </span>
+                        )}
                     </div>
                 </div>
 
                 <button
-                    onClick={() => onDelete(task.id)}
+                    onClick={onDelete}
                     className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                 >
                     <Trash2 className="w-4 h-4" />

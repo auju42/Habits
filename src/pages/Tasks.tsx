@@ -9,7 +9,7 @@ import TaskForm from '../components/TaskForm';
 type FilterType = 'all' | 'active' | 'completed';
 
 export default function Tasks() {
-    const { user } = useAuth();
+    const { user, accessToken } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -30,20 +30,21 @@ export default function Tasks() {
         title: string,
         priority: 'low' | 'medium' | 'high',
         description?: string,
-        dueDate?: string
+        dueDate?: string,
+        recurrence: 'daily' | 'weekly' | 'monthly' | 'none' = 'none'
     ) => {
         if (!user) return;
-        await addTask(user.uid, title, priority, description, dueDate);
+        await addTask(user.uid, title, priority, description, dueDate, accessToken, recurrence);
     };
 
-    const handleToggleTask = async (taskId: string, completed: boolean) => {
+    const handleToggleTask = async (task: Task) => {
         if (!user) return;
-        await toggleTaskCompletion(user.uid, taskId, completed);
+        await toggleTaskCompletion(user.uid, task, accessToken);
     };
 
-    const handleDeleteTask = async (taskId: string) => {
+    const handleDeleteTask = async (task: Task) => {
         if (!user || !window.confirm('Delete this task?')) return;
-        await deleteTask(user.uid, taskId);
+        await deleteTask(user.uid, task.id, task.googleCalendarEventId, accessToken);
     };
 
     const filteredTasks = tasks.filter(task => {
@@ -91,8 +92,8 @@ export default function Tasks() {
                         key={f}
                         onClick={() => setFilter(f)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === f
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
                         {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -126,8 +127,8 @@ export default function Tasks() {
                         <TaskCard
                             key={task.id}
                             task={task}
-                            onToggle={handleToggleTask}
-                            onDelete={handleDeleteTask}
+                            onToggle={() => handleToggleTask(task)}
+                            onDelete={() => handleDeleteTask(task)}
                         />
                     ))}
                 </div>

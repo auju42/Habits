@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 interface TaskFormProps {
     onClose: () => void;
-    onSubmit: (title: string, priority: 'low' | 'medium' | 'high', description?: string, dueDate?: string) => Promise<void>;
+    onSubmit: (title: string, priority: 'low' | 'medium' | 'high', description?: string, dueDate?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | 'none') => Promise<void>;
 }
 
 export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
@@ -11,6 +11,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
     const [dueDate, setDueDate] = useState('');
+    const [recurrence, setRecurrence] = useState<'daily' | 'weekly' | 'monthly' | 'none'>('none');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -19,7 +20,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
 
         setLoading(true);
         try {
-            await onSubmit(title, priority, description || undefined, dueDate || undefined);
+            await onSubmit(title, priority, description || undefined, dueDate || undefined, recurrence);
             onClose();
         } catch (error) {
             console.error(error);
@@ -84,15 +85,31 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Due Date
+                                Recurrence
                             </label>
-                            <input
-                                type="date"
-                                value={dueDate}
-                                onChange={(e) => setDueDate(e.target.value)}
+                            <select
+                                value={recurrence}
+                                onChange={(e) => setRecurrence(e.target.value as 'daily' | 'weekly' | 'monthly' | 'none')}
                                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            />
+                            >
+                                <option value="none">None</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Due Date
+                        </label>
+                        <input
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        />
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">

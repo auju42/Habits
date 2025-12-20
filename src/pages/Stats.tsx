@@ -5,6 +5,8 @@ import type { Habit } from '../types';
 import { Trophy, Activity, TrendingUp, Flame, CheckCircle } from 'lucide-react';
 import { subDays, format, isAfter, parseISO, eachDayOfInterval, startOfWeek, endOfWeek, subWeeks } from 'date-fns';
 import { cn } from '../lib/utils';
+import { exportHabitsToCSV } from '../utils/csvExport';
+import { Download } from 'lucide-react';
 
 export default function Stats() {
     const { user } = useAuth();
@@ -86,9 +88,18 @@ export default function Stats() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-                Statistics
-            </h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    Statistics
+                </h1>
+                <button
+                    onClick={() => exportHabitsToCSV(habits)}
+                    className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white px-4 py-2 rounded-xl transition-colors"
+                >
+                    <Download className="w-4 h-4" />
+                    Export CSV
+                </button>
+            </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
