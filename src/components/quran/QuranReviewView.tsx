@@ -36,11 +36,7 @@ export default function QuranReviewView({ userId, progress }: Props) {
         }
     };
 
-    // Calculate total reviews (Hizb level)
-    const totalHizbReviews = Object.values(progress?.hizbReviews || {}).reduce((sum, dates) => sum + dates.length, 0);
-    // Add legacy Juz reviews (count as 2 hizbs)
-    const totalLegacyReviews = Object.values(progress?.juzReviews || {}).reduce((sum, dates) => sum + dates.length * 2, 0);
-    const grandTotalReviews = totalHizbReviews + totalLegacyReviews;
+
 
     // Calculate date range based on view mode
     const getRange = () => {
@@ -75,15 +71,12 @@ export default function QuranReviewView({ userId, progress }: Props) {
         else setSelectedMonth(addMonths(selectedMonth, 3));
     };
 
+
+
     return (
         <div className="space-y-6">
-            {/* Stats Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="text-3xl font-bold text-indigo-500">{grandTotalReviews}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Hizbs Reviewed</div>
-                </div>
-            </div>
+            {/* Review Tracker Stats */}
+
 
             {/* Month/Quarter Selector */}
             <div className="flex items-center justify-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">

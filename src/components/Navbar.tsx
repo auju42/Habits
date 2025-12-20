@@ -5,20 +5,34 @@ import { LogOut, LayoutGrid, BarChart2, Moon, Sun, CalendarDays, CheckSquare, Me
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Navbar() {
-    const { user, logout } = useAuth();
+    const { user, logout, appMode } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     if (!user) return null;
 
-    const navLinks = [
+    const allNavLinks = [
         { to: '/', icon: LayoutGrid, label: 'Dashboard' },
         { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
         { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
         { to: '/quran', icon: BookOpen, label: 'Hifz' },
         { to: '/stats', icon: BarChart2, label: 'Statistics' },
     ];
+
+    const navLinks = allNavLinks.filter(link => {
+        if (!appMode || appMode === 'both') return true;
+
+        if (appMode === 'habits') {
+            return link.to !== '/quran';
+        }
+
+        if (appMode === 'quran') {
+            return link.to === '/quran';
+        }
+
+        return true;
+    });
 
     return (
         <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 relative z-40">

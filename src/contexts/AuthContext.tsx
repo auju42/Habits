@@ -9,7 +9,11 @@ interface AuthContextType {
     signInWithGoogle: () => Promise<void>;
     signInAsGuest: () => Promise<void>;
     logout: () => Promise<void>;
+    appMode: 'habits' | 'quran' | 'both' | null;
+    setAppMode: (mode: 'habits' | 'quran' | 'both') => void;
 }
+
+export type AppMode = 'habits' | 'quran' | 'both';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -17,10 +21,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('google_access_token'));
+    const [appMode, setAppModeState] = useState<AppMode | null>(null);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
+
+            // Load app mode for this user if exists
+            if (currentUser) {
+                const savedMode = localStorage.getItem(`app_mode_${currentUser.uid}`) as AppMode | null;
+                if (savedMode) {
+                    setAppModeState(savedMode);
+                }
+            } else {
+                setAppModeState(null);
+            }
+
             setLoading(false);
         });
         return unsubscribe;
@@ -57,6 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOut(auth);
         setAccessToken(null);
         localStorage.removeItem('google_access_token');
+        setAppModeState(null);
+    };
+
+    const setAppMode = (mode: AppMode) => {
+        setAppModeState(mode);
+        if (user) {
+            localStorage.setItem(`app_mode_${user.uid}`, mode);
+        }
     };
 
     const value = {
@@ -65,7 +89,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accessToken,
         signInWithGoogle,
         signInAsGuest,
-        logout
+        logout,
+        appMode,
+        setAppMode
     };
 
     return (

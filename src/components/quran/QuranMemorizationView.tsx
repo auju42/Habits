@@ -39,22 +39,22 @@ export default function QuranMemorizationView({ userId, progress }: Props) {
 
     const totalMemorized = Object.keys(progress?.memorizedPages || {}).length;
 
+    // Calculate total juz equivalent
+    const totalJuzMemorized = (totalMemorized / 20).toFixed(1);
+    const totalJuzPercentage = ((parseFloat(totalJuzMemorized) / 30) * 100).toFixed(0);
+
     return (
         <div className="space-y-6">
             {/* Stats Summary */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-xl text-white">
                     <div className="text-3xl font-bold">{totalMemorized}</div>
-                    <div className="text-sm opacity-80">Pages</div>
+                    <div className="text-sm opacity-80">Pages ({((totalMemorized / 604) * 100).toFixed(0)}%)</div>
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 rounded-xl text-white">
-                    <div className="text-3xl font-bold">{Math.floor(totalMemorized / 20)}</div>
-                    <div className="text-sm opacity-80">Juz (Approx)</div>
-                </div>
-                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 rounded-xl text-white">
-                    <div className="text-3xl font-bold">{((totalMemorized / 604) * 100).toFixed(0)}%</div>
-                    <div className="text-sm opacity-80">Total</div>
+                    <div className="text-3xl font-bold">{totalJuzMemorized}</div>
+                    <div className="text-sm opacity-80">Juz ({totalJuzPercentage}%)</div>
                 </div>
             </div>
 

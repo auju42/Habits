@@ -9,6 +9,7 @@ import Stats from './pages/Stats';
 import Calendar from './pages/Calendar';
 import Tasks from './pages/Tasks';
 import QuranTracker from './pages/QuranTracker';
+import ModeSelection from './pages/ModeSelection';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="/login" element={<Login />} />
 
             <Route element={<PrivateRoute />}>
+              <Route path="/mode-selection" element={<ModeSelection />} />
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/stats" element={<Stats />} />
