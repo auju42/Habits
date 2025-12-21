@@ -134,10 +134,10 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
                                 title={`${format(day, 'MMM d')}: ${habit.habitType === 'count' ? `${countProgress}/${dailyGoal}` : (showAsComplete ? 'Done' : 'Not done')}`}
                             >
                                 <span className={cn(
-                                    "text-[8px] font-medium z-10",
+                                    "absolute top-0.5 left-0.5 text-[8px] font-medium z-10 leading-none",
                                     (style.backgroundColor || style.background || bgClass === "bg-green-500" || bgClass === "bg-red-500")
-                                        ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]"
-                                        : "text-gray-400 dark:text-gray-500"
+                                        ? "text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]"
+                                        : "text-gray-300 dark:text-gray-600"
                                 )}>
                                     {format(day, 'd')}
                                 </span>
@@ -346,10 +346,10 @@ export default function HabitCalendarView() {
                                             isDayToday && "bg-blue-50 dark:bg-blue-900/20 rounded"
                                         )}
                                     >
-                                        <span className="text-[10px] text-gray-400 font-medium self-start leading-none mb-1">
+                                        <span className="absolute top-0.5 left-1 text-[8px] text-gray-300 dark:text-gray-600 font-normal leading-none z-10">
                                             {format(day, 'd')}
                                         </span>
-                                        <div className="flex flex-wrap gap-0.5 justify-center content-start w-full">
+                                        <div className="flex flex-wrap gap-0.5 justify-center content-center w-full h-full pt-1">
                                             {habits.map(habit => {
                                                 const isCompleted = habit.completedDates?.includes(dateStr);
                                                 const countProgress = habit.dailyProgress?.[dateStr] || 0;
