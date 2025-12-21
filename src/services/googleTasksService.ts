@@ -13,7 +13,8 @@ export interface GoogleTask {
 // Fetch all tasks from the default list
 export async function fetchGoogleTasks(accessToken: string): Promise<GoogleTask[]> {
     try {
-        const response = await fetch(`${TASKS_API}/lists/@default/tasks?showCompleted=true&maxResults=100`, {
+        // showHidden=true is important because completed tasks are often hidden
+        const response = await fetch(`${TASKS_API}/lists/@default/tasks?showCompleted=true&showHidden=true&maxResults=100`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
 
@@ -23,7 +24,9 @@ export async function fetchGoogleTasks(accessToken: string): Promise<GoogleTask[
         }
 
         const data = await response.json();
-        return data.items || [];
+        const items = data.items || [];
+        console.log(`Fetched ${items.length} tasks from Google Tasks API (showCompleted: true, showHidden: true)`);
+        return items;
     } catch (error) {
         console.error('Error fetching Google Tasks:', error);
         return [];

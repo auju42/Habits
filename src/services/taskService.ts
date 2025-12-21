@@ -200,11 +200,13 @@ export const syncFromGoogleTasks = async (userId: string, accessToken: string) =
                 // Update completion status if different
                 const gCompleted = gTask.status === 'completed';
                 if (existingTask.completed !== gCompleted) {
+                    console.log(`Syncing task status from Google: "${gTask.title}" -> ${gCompleted ? 'Completed' : 'Pending'}`);
                     const taskRef = doc(db, `users/${userId}/${COLLECTION_NAME}/${existingTask.id}`);
                     await updateDoc(taskRef, { completed: gCompleted });
                 }
             } else {
                 // New task from Google - add to Firebase
+                console.log(`Syncing new task from Google: "${gTask.title}"`);
                 await addDoc(collection(db, `users/${userId}/${COLLECTION_NAME}`), {
                     userId,
                     title: gTask.title,
