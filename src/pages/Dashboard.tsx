@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Flame, CheckCircle, Calendar, Target } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { subscribeToHabits, addHabit, toggleHabitCompletion, deleteHabit, incrementHabitProgress, decrementHabitProgress } from '../services/habitService';
+import { subscribeToHabits, addHabit, toggleHabitCompletion, incrementHabitProgress, decrementHabitProgress } from '../services/habitService';
 import { subscribeToTasks, toggleTaskCompletion } from '../services/taskService';
 import type { Habit, Task } from '../types';
 import HabitCard from '../components/HabitCard';
@@ -52,11 +52,6 @@ export default function Dashboard() {
     const handleDecrementHabit = async (habit: Habit, date: string) => {
         if (!user) return;
         await decrementHabitProgress(user.uid, habit, date);
-    };
-
-    const handleDeleteHabit = async (habitId: string) => {
-        if (!user || !window.confirm('Are you sure you want to delete this habit?')) return;
-        await deleteHabit(user.uid, habitId);
     };
 
     const handleToggleTask = async (task: Task) => {
@@ -199,7 +194,6 @@ export default function Dashboard() {
                                     key={habit.id}
                                     habit={habit}
                                     onToggle={handleToggleHabit}
-                                    onDelete={handleDeleteHabit}
                                     onIncrement={handleIncrementHabit}
                                     onDecrement={handleDecrementHabit}
                                 />
