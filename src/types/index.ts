@@ -37,8 +37,7 @@ export interface Task {
     priority: 'low' | 'medium' | 'high';
     dueDate?: string; // YYYY-MM-DD
     createdAt: number; // Timestamp
-    itemType: 'task' | 'event'; // NEW: task → Google Tasks, event → Google Calendar
-    googleTaskId?: string; // For Google Tasks sync
+    itemType: 'task' | 'event'; // task → local only, event → Google Calendar
     googleCalendarEventId?: string; // For Google Calendar sync
     recurrence?: 'daily' | 'weekly' | 'monthly' | 'none';
     isRecurring?: boolean;

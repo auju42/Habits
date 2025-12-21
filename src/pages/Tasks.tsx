@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { subscribeToTasks, addTask, toggleTaskCompletion, deleteTask, syncFromGoogleTasks } from '../services/taskService';
+import { subscribeToTasks, addTask, toggleTaskCompletion, deleteTask } from '../services/taskService';
 import type { Task } from '../types';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
@@ -18,18 +18,13 @@ export default function Tasks() {
     useEffect(() => {
         if (!user) return;
 
-        // Perform sync if we have a Google access token
-        if (accessToken) {
-            syncFromGoogleTasks(user.uid, accessToken);
-        }
-
         const unsubscribe = subscribeToTasks(user.uid, (data) => {
             setTasks(data);
             setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [user, accessToken]);
+    }, [user]);
 
     const handleAddTask = async (
         title: string,

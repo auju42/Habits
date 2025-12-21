@@ -60,8 +60,8 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
                                 type="button"
                                 onClick={() => setItemType('task')}
                                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${itemType === 'task'
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                        : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                    : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 <CheckSquare className="w-5 h-5" />
@@ -71,8 +71,8 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
                                 type="button"
                                 onClick={() => setItemType('event')}
                                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${itemType === 'event'
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
-                                        : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
+                                    : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 <Calendar className="w-5 h-5" />
@@ -80,7 +80,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
                             </button>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {itemType === 'task' ? 'Syncs to Google Tasks' : 'Syncs to Google Calendar'}
+                            {itemType === 'task' ? 'Stored locally in Stride' : 'Syncs to Google Calendar'}
                         </p>
                     </div>
 
@@ -168,8 +168,8 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
                             type="submit"
                             disabled={loading || !title.trim()}
                             className={`px-4 py-2 font-medium rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${itemType === 'task'
-                                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30'
-                                    : 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/30'
+                                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30'
+                                : 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/30'
                                 }`}
                         >
                             {loading ? 'Creating...' : `Create ${itemType === 'task' ? 'Task' : 'Event'}`}

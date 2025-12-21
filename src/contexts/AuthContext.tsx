@@ -66,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const signInWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/calendar.events');
-        provider.addScope('https://www.googleapis.com/auth/tasks');
         try {
             const result = await signInWithPopup(auth, provider);
             const credential = GoogleAuthProvider.credentialFromResult(result);
