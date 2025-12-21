@@ -3,7 +3,7 @@ import { X, Target, Ban } from 'lucide-react';
 
 interface HabitFormProps {
     onClose: () => void;
-    onSubmit: (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean) => Promise<void>;
+    onSubmit: (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean, color?: string) => Promise<void>;
 }
 
 export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
@@ -11,7 +11,19 @@ export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
     const [habitType, setHabitType] = useState<'simple' | 'count'>('simple');
     const [dailyGoal, setDailyGoal] = useState(3);
     const [isQuitting, setIsQuitting] = useState(false);
+    const [selectedColor, setSelectedColor] = useState('#3B82F6');
     const [loading, setLoading] = useState(false);
+
+    const colors = [
+        { value: '#3B82F6', label: 'Blue', class: 'bg-blue-500' },
+        { value: '#EF4444', label: 'Red', class: 'bg-red-500' },
+        { value: '#10B981', label: 'Green', class: 'bg-green-500' },
+        { value: '#F59E0B', label: 'Amber', class: 'bg-amber-500' },
+        { value: '#8B5CF6', label: 'Purple', class: 'bg-purple-500' },
+        { value: '#EC4899', label: 'Pink', class: 'bg-pink-500' },
+        { value: '#06B6D4', label: 'Cyan', class: 'bg-cyan-500' },
+        { value: '#64748B', label: 'Slate', class: 'bg-slate-500' },
+    ];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,7 +31,7 @@ export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
 
         setLoading(true);
         try {
-            await onSubmit(name, habitType, habitType === 'count' ? dailyGoal : undefined, isQuitting);
+            await onSubmit(name, habitType, habitType === 'count' ? dailyGoal : undefined, isQuitting, selectedColor);
             onClose();
         } catch (error) {
             console.error(error);
@@ -30,7 +42,7 @@ export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl transform transition-all">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl transform transition-all max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">New Habit</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-1">
@@ -90,7 +102,28 @@ export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
                         />
                     </div>
 
-                    {/* Tracking Mode Selection - Available for all habit types now */}
+                    {/* Color Picker */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Color
+                        </label>
+                        <div className="flex flex-wrap gap-3">
+                            {colors.map((color) => (
+                                <button
+                                    key={color.value}
+                                    type="button"
+                                    onClick={() => setSelectedColor(color.value)}
+                                    className={`w-8 h-8 rounded-full transition-all flex items-center justify-center ${color.class} ${selectedColor === color.value
+                                        ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-offset-gray-800 scale-110'
+                                        : 'hover:scale-110'
+                                        }`}
+                                    title={color.label}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Tracking Mode Selection */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Tracking Mode

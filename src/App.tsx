@@ -4,12 +4,10 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Stats from './pages/Stats';
-import Calendar from './pages/Calendar';
+import HabitsPage from './pages/HabitsPage';
 import Tasks from './pages/Tasks';
 import QuranTracker from './pages/QuranTracker';
-import ModeSelection from './pages/ModeSelection';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -20,13 +18,11 @@ function App() {
             <Route path="/login" element={<Login />} />
 
             <Route element={<PrivateRoute />}>
-              <Route path="/mode-selection" element={<ModeSelection />} />
               <Route element={<Layout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/stats" element={<Stats />} />
-                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/" element={<HabitsPage />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/quran" element={<QuranTracker />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
             </Route>
 

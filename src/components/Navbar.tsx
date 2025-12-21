@@ -1,38 +1,32 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { LogOut, LayoutGrid, BarChart2, Moon, Sun, CalendarDays, CheckSquare, Menu, X, BookOpen } from 'lucide-react';
+import { LayoutGrid, Moon, Sun, CheckSquare, Menu, X, BookOpen, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Navbar() {
-    const { user, logout, appMode } = useAuth();
+    const { user, enabledModules } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     if (!user) return null;
 
-    const allNavLinks = [
-        { to: '/', icon: LayoutGrid, label: 'Dashboard' },
-        { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
-        { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
-        { to: '/quran', icon: BookOpen, label: 'Hifz' },
-        { to: '/stats', icon: BarChart2, label: 'Statistics' },
+    // Build nav links based on enabled modules
+    const navLinks = [
+        // Habits (Unified View)
+        ...(enabledModules.habits
+            ? [{ to: '/', icon: CheckSquare, label: 'Habits' }]
+            : []),
+        // Tasks
+        ...(enabledModules.tasks
+            ? [{ to: '/tasks', icon: LayoutGrid, label: 'Tasks' }]
+            : []),
+        // Quran
+        ...(enabledModules.quran
+            ? [{ to: '/quran', icon: BookOpen, label: 'Hifz' }]
+            : []),
     ];
-
-    const navLinks = allNavLinks.filter(link => {
-        if (!appMode || appMode === 'both') return true;
-
-        if (appMode === 'habits') {
-            return link.to !== '/quran';
-        }
-
-        if (appMode === 'quran') {
-            return link.to === '/quran';
-        }
-
-        return true;
-    });
 
     return (
         <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 relative z-40">
@@ -41,7 +35,7 @@ export default function Navbar() {
                     <div className="flex">
                         <div className="flex-shrink-0 flex items-center">
                             <span className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                                HabitTracker
+                                Stride
                             </span>
                         </div>
                         {/* Desktop Navigation */}
@@ -70,7 +64,7 @@ export default function Navbar() {
                             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                         </button>
                         <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden sm:block"></div>
-                        <div className="hidden sm:flex flex-shrink-0 items-center gap-4">
+                        <div className="hidden sm:flex flex-shrink-0 items-center gap-3">
                             <span className="text-sm text-gray-700 dark:text-gray-300">
                                 {user.displayName}
                             </span>
@@ -79,13 +73,13 @@ export default function Navbar() {
                                 src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`}
                                 alt="User avatar"
                             />
-                            <button
-                                onClick={logout}
+                            <Link
+                                to="/settings"
                                 className="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
-                                title="Sign out"
+                                title="Settings"
                             >
-                                <LogOut className="w-5 h-5" />
-                            </button>
+                                <Settings className="w-5 h-5" />
+                            </Link>
                         </div>
 
                         {/* Mobile menu button */}
@@ -133,16 +127,17 @@ export default function Navbar() {
                                     alt="User avatar"
                                 />
                             </div>
-                            <div className="ml-3">
+                            <div className="ml-3 flex-1">
                                 <div className="text-base font-medium text-gray-800 dark:text-gray-200">{user.displayName}</div>
                                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{user.email}</div>
                             </div>
-                            <button
-                                onClick={logout}
-                                className="ml-auto flex-shrink-0 p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                            <Link
+                                to="/settings"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
                             >
-                                <LogOut className="w-6 h-6" />
-                            </button>
+                                <Settings className="w-6 h-6" />
+                            </Link>
                         </div>
                     </div>
                 </div>

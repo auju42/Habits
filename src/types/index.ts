@@ -18,6 +18,7 @@ export interface Habit {
     dailyGoal?: number; // For count type
     dailyProgress: Record<string, number>; // YYYY-MM-DD -> count
     isQuitting?: boolean; // If true, success = NOT doing the habit
+    order?: number;
 }
 
 export interface HabitStats {

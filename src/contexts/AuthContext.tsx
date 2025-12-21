@@ -2,6 +2,12 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
+export interface EnabledModules {
+    habits: boolean;
+    tasks: boolean;
+    quran: boolean;
+}
+
 interface AuthContextType {
     user: User | null;
     loading: boolean;
@@ -9,11 +15,14 @@ interface AuthContextType {
     signInWithGoogle: () => Promise<void>;
     signInAsGuest: () => Promise<void>;
     logout: () => Promise<void>;
-    appMode: 'habits' | 'quran' | 'both' | null;
-    setAppMode: (mode: 'habits' | 'quran' | 'both') => void;
+    enabledModules: EnabledModules;
+    setModuleEnabled: (module: keyof EnabledModules, enabled: boolean) => void;
+    setAllModules: (modules: EnabledModules) => void;
+    hasCompletedSetup: boolean;
+    completeSetup: () => void;
 }
 
-export type AppMode = 'habits' | 'quran' | 'both';
+const DEFAULT_MODULES: EnabledModules = { habits: true, tasks: true, quran: true };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -21,20 +30,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('google_access_token'));
-    const [appMode, setAppModeState] = useState<AppMode | null>(null);
+    const [enabledModules, setEnabledModules] = useState<EnabledModules>(DEFAULT_MODULES);
+    const [hasCompletedSetup, setHasCompletedSetup] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
 
-            // Load app mode for this user if exists
             if (currentUser) {
-                const savedMode = localStorage.getItem(`app_mode_${currentUser.uid}`) as AppMode | null;
-                if (savedMode) {
-                    setAppModeState(savedMode);
+                // Load enabled modules for this user
+                const savedModules = localStorage.getItem(`modules_${currentUser.uid}`);
+                if (savedModules) {
+                    try {
+                        setEnabledModules(JSON.parse(savedModules));
+                    } catch {
+                        setEnabledModules(DEFAULT_MODULES);
+                    }
+                } else {
+                    setEnabledModules(DEFAULT_MODULES);
                 }
+
+                // Check if user has completed setup
+                const setupComplete = localStorage.getItem(`setup_complete_${currentUser.uid}`);
+                setHasCompletedSetup(setupComplete === 'true');
             } else {
-                setAppModeState(null);
+                setEnabledModules(DEFAULT_MODULES);
+                setHasCompletedSetup(false);
             }
 
             setLoading(false);
@@ -60,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signInAsGuest = async () => {
         try {
-            // Dynamically import to keep bundle size optimized if desired, though standard import is fine here
             const { signInAnonymously } = await import('firebase/auth');
             await signInAnonymously(auth);
         } catch (error) {
@@ -73,13 +93,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOut(auth);
         setAccessToken(null);
         localStorage.removeItem('google_access_token');
-        setAppModeState(null);
+        setEnabledModules(DEFAULT_MODULES);
+        setHasCompletedSetup(false);
     };
 
-    const setAppMode = (mode: AppMode) => {
-        setAppModeState(mode);
+    const setModuleEnabled = (module: keyof EnabledModules, enabled: boolean) => {
+        const newModules = { ...enabledModules, [module]: enabled };
+        setEnabledModules(newModules);
         if (user) {
-            localStorage.setItem(`app_mode_${user.uid}`, mode);
+            localStorage.setItem(`modules_${user.uid}`, JSON.stringify(newModules));
+        }
+    };
+
+    const setAllModules = (modules: EnabledModules) => {
+        setEnabledModules(modules);
+        if (user) {
+            localStorage.setItem(`modules_${user.uid}`, JSON.stringify(modules));
+        }
+    };
+
+    const completeSetup = () => {
+        setHasCompletedSetup(true);
+        if (user) {
+            localStorage.setItem(`setup_complete_${user.uid}`, 'true');
         }
     };
 
@@ -90,8 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithGoogle,
         signInAsGuest,
         logout,
-        appMode,
-        setAppMode
+        enabledModules,
+        setModuleEnabled,
+        setAllModules,
+        hasCompletedSetup,
+        completeSetup
     };
 
     return (

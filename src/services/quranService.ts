@@ -176,3 +176,39 @@ export const removeHizbReview = async (userId: string, hizbNumber: number, date:
         updatedAt: serverTimestamp()
     }, { merge: true });
 };
+
+// Bulk save reviews for a specific date - replaces all reviews for that date
+export const saveHizbReviewsForDate = async (
+    userId: string,
+    hizbNumbers: number[],
+    date: string,
+    progress: QuranProgress | null
+) => {
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
+
+    if (!progress) {
+        await initializeQuranProgress(userId);
+    }
+
+    const currentHizbReviews = { ...(progress?.hizbReviews || {}) };
+
+    // First, remove this date from all hizbs
+    for (let h = 1; h <= 60; h++) {
+        if (currentHizbReviews[h]) {
+            currentHizbReviews[h] = currentHizbReviews[h].filter((d: string) => d !== date);
+        }
+    }
+
+    // Then, add this date to the selected hizbs
+    for (const hizb of hizbNumbers) {
+        const existing = currentHizbReviews[hizb] || [];
+        if (!existing.includes(date)) {
+            currentHizbReviews[hizb] = [...existing, date].sort();
+        }
+    }
+
+    await setDoc(docRef, {
+        hizbReviews: currentHizbReviews,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+};
