@@ -9,9 +9,11 @@ import {
     query,
     orderBy,
     serverTimestamp,
+    getDocs,
 } from 'firebase/firestore';
 import type { Task } from '../types';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from './googleCalendarService';
+import { createGoogleTask, updateGoogleTaskStatus, deleteGoogleTask, fetchGoogleTasks } from './googleTasksService';
 import { addDays, addWeeks, addMonths, format, parseISO } from 'date-fns';
 
 const COLLECTION_NAME = 'tasks';
@@ -38,16 +40,28 @@ export const addTask = async (
     description?: string,
     dueDate?: string,
     accessToken?: string | null,
-    recurrence: 'daily' | 'weekly' | 'monthly' | 'none' = 'none'
+    recurrence: 'daily' | 'weekly' | 'monthly' | 'none' = 'none',
+    itemType: 'task' | 'event' = 'task'
 ) => {
     let googleCalendarEventId = null;
+    let googleTaskId = null;
 
-    if (accessToken && dueDate) {
-        googleCalendarEventId = await createCalendarEvent(accessToken, {
-            title,
-            description,
-            dueDate
-        });
+    if (accessToken) {
+        if (itemType === 'event' && dueDate) {
+            // Sync to Google Calendar
+            googleCalendarEventId = await createCalendarEvent(accessToken, {
+                title,
+                description,
+                dueDate
+            });
+        } else if (itemType === 'task') {
+            // Sync to Google Tasks
+            googleTaskId = await createGoogleTask(accessToken, {
+                title,
+                notes: description,
+                due: dueDate
+            });
+        }
     }
 
     await addDoc(collection(db, `users/${userId}/${COLLECTION_NAME}`), {
@@ -58,7 +72,9 @@ export const addTask = async (
         priority,
         dueDate: dueDate || null,
         createdAt: serverTimestamp(),
+        itemType,
         googleCalendarEventId,
+        googleTaskId,
         recurrence,
         isRecurring: recurrence !== 'none',
     });
@@ -74,13 +90,17 @@ export const toggleTaskCompletion = async (
 
     await updateDoc(taskRef, { completed: newCompleted });
 
-    // Sync with Google Calendar
-    if (accessToken && task.googleCalendarEventId) {
-        await updateCalendarEvent(accessToken, task.googleCalendarEventId, {
-            title: task.title,
-            completed: newCompleted,
-            dueDate: task.dueDate
-        });
+    // Sync with appropriate Google service
+    if (accessToken) {
+        if (task.itemType === 'event' && task.googleCalendarEventId) {
+            await updateCalendarEvent(accessToken, task.googleCalendarEventId, {
+                title: task.title,
+                completed: newCompleted,
+                dueDate: task.dueDate
+            });
+        } else if (task.itemType === 'task' && task.googleTaskId) {
+            await updateGoogleTaskStatus(accessToken, task.googleTaskId, newCompleted);
+        }
     }
 
     // Handle Recurring Task
@@ -93,7 +113,8 @@ export const toggleTaskCompletion = async (
             task.description,
             nextDueDate,
             accessToken,
-            task.recurrence
+            task.recurrence,
+            task.itemType
         );
     }
 };
@@ -119,11 +140,15 @@ const calculateNextDueDate = (currentDueDate: string, recurrence: 'daily' | 'wee
     return format(nextDate, 'yyyy-MM-dd');
 };
 
-export const deleteTask = async (userId: string, taskId: string, googleCalendarEventId?: string, accessToken?: string | null) => {
-    await deleteDoc(doc(db, `users/${userId}/${COLLECTION_NAME}/${taskId}`));
+export const deleteTask = async (userId: string, task: Task, accessToken?: string | null) => {
+    await deleteDoc(doc(db, `users/${userId}/${COLLECTION_NAME}/${task.id}`));
 
-    if (accessToken && googleCalendarEventId) {
-        await deleteCalendarEvent(accessToken, googleCalendarEventId);
+    if (accessToken) {
+        if (task.itemType === 'event' && task.googleCalendarEventId) {
+            await deleteCalendarEvent(accessToken, task.googleCalendarEventId);
+        } else if (task.itemType === 'task' && task.googleTaskId) {
+            await deleteGoogleTask(accessToken, task.googleTaskId);
+        }
     }
 };
 
@@ -131,17 +156,72 @@ export const updateTask = async (
     userId: string,
     taskId: string,
     updates: Partial<Pick<Task, 'title' | 'description' | 'priority' | 'dueDate'>>,
-    googleCalendarEventId?: string,
+    task: Task,
     accessToken?: string | null
 ) => {
     const taskRef = doc(db, `users/${userId}/${COLLECTION_NAME}/${taskId}`);
     await updateDoc(taskRef, updates);
 
-    if (accessToken && googleCalendarEventId) {
-        await updateCalendarEvent(accessToken, googleCalendarEventId, {
-            title: updates.title,
-            description: updates.description,
-            dueDate: updates.dueDate
+    if (accessToken) {
+        if (task.itemType === 'event' && task.googleCalendarEventId) {
+            await updateCalendarEvent(accessToken, task.googleCalendarEventId, {
+                title: updates.title,
+                description: updates.description,
+                dueDate: updates.dueDate
+            });
+        }
+        // Note: Google Tasks API doesn't support updating title/notes easily, only status
+    }
+};
+
+// Sync tasks from Google Tasks to Firebase
+export const syncFromGoogleTasks = async (userId: string, accessToken: string) => {
+    try {
+        const googleTasks = await fetchGoogleTasks(accessToken);
+        if (!googleTasks.length) return;
+
+        // Get existing tasks from Firebase
+        const snapshot = await getDocs(collection(db, `users/${userId}/${COLLECTION_NAME}`));
+        const existingTasks = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        })) as Task[];
+
+        // Create a map of googleTaskId -> Firebase task
+        const taskMap = new Map<string, Task>();
+        existingTasks.forEach(t => {
+            if (t.googleTaskId) taskMap.set(t.googleTaskId, t);
         });
+
+        for (const gTask of googleTasks) {
+            const existingTask = taskMap.get(gTask.id);
+
+            if (existingTask) {
+                // Update completion status if different
+                const gCompleted = gTask.status === 'completed';
+                if (existingTask.completed !== gCompleted) {
+                    const taskRef = doc(db, `users/${userId}/${COLLECTION_NAME}/${existingTask.id}`);
+                    await updateDoc(taskRef, { completed: gCompleted });
+                }
+            } else {
+                // New task from Google - add to Firebase
+                await addDoc(collection(db, `users/${userId}/${COLLECTION_NAME}`), {
+                    userId,
+                    title: gTask.title,
+                    description: gTask.notes || '',
+                    completed: gTask.status === 'completed',
+                    priority: 'medium',
+                    dueDate: gTask.due ? gTask.due.split('T')[0] : null,
+                    createdAt: serverTimestamp(),
+                    itemType: 'task',
+                    googleTaskId: gTask.id,
+                    googleCalendarEventId: null,
+                    recurrence: 'none',
+                    isRecurring: false,
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error syncing from Google Tasks:', error);
     }
 };

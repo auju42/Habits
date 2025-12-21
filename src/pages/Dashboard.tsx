@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Flame, CheckCircle, Calendar, Target } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { subscribeToHabits, addHabit, toggleHabitCompletion, incrementHabitProgress, decrementHabitProgress } from '../services/habitService';
-import { subscribeToTasks, toggleTaskCompletion } from '../services/taskService';
+import { subscribeToTasks, toggleTaskCompletion, syncFromGoogleTasks } from '../services/taskService';
 import type { Habit, Task } from '../types';
 import HabitCard from '../components/HabitCard';
 import HabitForm from '../components/HabitForm';
@@ -19,6 +19,11 @@ export default function Dashboard() {
     useEffect(() => {
         if (!user) return;
 
+        // Perform sync if we have a Google access token
+        if (accessToken) {
+            syncFromGoogleTasks(user.uid, accessToken);
+        }
+
         const unsubHabits = subscribeToHabits(user.uid, (data) => {
             setHabits(data);
             setLoading(false);
@@ -32,7 +37,7 @@ export default function Dashboard() {
             unsubHabits();
             unsubTasks();
         };
-    }, [user]);
+    }, [user, accessToken]);
 
     const handleAddHabit = async (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean) => {
         if (!user) return;

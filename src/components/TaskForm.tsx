@@ -1,9 +1,16 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, CheckSquare, Calendar } from 'lucide-react';
 
 interface TaskFormProps {
     onClose: () => void;
-    onSubmit: (title: string, priority: 'low' | 'medium' | 'high', description?: string, dueDate?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | 'none') => Promise<void>;
+    onSubmit: (
+        title: string,
+        priority: 'low' | 'medium' | 'high',
+        description?: string,
+        dueDate?: string,
+        recurrence?: 'daily' | 'weekly' | 'monthly' | 'none',
+        itemType?: 'task' | 'event'
+    ) => Promise<void>;
 }
 
 export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
@@ -12,6 +19,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
     const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
     const [dueDate, setDueDate] = useState('');
     const [recurrence, setRecurrence] = useState<'daily' | 'weekly' | 'monthly' | 'none'>('none');
+    const [itemType, setItemType] = useState<'task' | 'event'>('task');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -20,7 +28,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
 
         setLoading(true);
         try {
-            await onSubmit(title, priority, description || undefined, dueDate || undefined, recurrence);
+            await onSubmit(title, priority, description || undefined, dueDate || undefined, recurrence, itemType);
             onClose();
         } catch (error) {
             console.error(error);
@@ -33,13 +41,49 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">New Task</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                        New {itemType === 'task' ? 'Task' : 'Event'}
+                    </h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Task / Event Toggle */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Type
+                        </label>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setItemType('task')}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${itemType === 'task'
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                        : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                <CheckSquare className="w-5 h-5" />
+                                Task
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setItemType('event')}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${itemType === 'event'
+                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
+                                        : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                <Calendar className="w-5 h-5" />
+                                Event
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {itemType === 'task' ? 'Syncs to Google Tasks' : 'Syncs to Google Calendar'}
+                        </p>
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Title
@@ -48,7 +92,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="e.g., Finish project report"
+                            placeholder={itemType === 'task' ? 'e.g., Finish project report' : 'e.g., Team meeting'}
                             className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                             autoFocus
                         />
@@ -102,7 +146,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Due Date
+                            {itemType === 'event' ? 'Date' : 'Due Date'}
                         </label>
                         <input
                             type="date"
@@ -123,9 +167,12 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
                         <button
                             type="submit"
                             disabled={loading || !title.trim()}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={`px-4 py-2 font-medium rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${itemType === 'task'
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30'
+                                    : 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/30'
+                                }`}
                         >
-                            {loading ? 'Creating...' : 'Create Task'}
+                            {loading ? 'Creating...' : `Create ${itemType === 'task' ? 'Task' : 'Event'}`}
                         </button>
                     </div>
                 </form>

@@ -1,4 +1,4 @@
-import { Check, Trash2, Calendar, RefreshCw } from 'lucide-react';
+import { Check, Trash2, Calendar, RefreshCw, CheckSquare } from 'lucide-react';
 import type { Task } from '../types';
 import { cn } from '../lib/utils';
 import { format, parseISO, isPast, isToday } from 'date-fns';
@@ -58,6 +58,17 @@ export default function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <span className={cn("text-xs px-2 py-1 rounded-full font-medium", priorityColors[task.priority])}>
                             {task.priority}
+                        </span>
+
+                        {/* Type indicator */}
+                        <span className={cn(
+                            "text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1",
+                            task.itemType === 'event'
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                                : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        )}>
+                            {task.itemType === 'event' ? <Calendar className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
+                            {task.itemType === 'event' ? 'Event' : 'Task'}
                         </span>
 
                         {task.dueDate && (

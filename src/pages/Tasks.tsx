@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { subscribeToTasks, addTask, toggleTaskCompletion, deleteTask } from '../services/taskService';
+import { subscribeToTasks, addTask, toggleTaskCompletion, deleteTask, syncFromGoogleTasks } from '../services/taskService';
 import type { Task } from '../types';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
@@ -18,23 +18,29 @@ export default function Tasks() {
     useEffect(() => {
         if (!user) return;
 
+        // Perform sync if we have a Google access token
+        if (accessToken) {
+            syncFromGoogleTasks(user.uid, accessToken);
+        }
+
         const unsubscribe = subscribeToTasks(user.uid, (data) => {
             setTasks(data);
             setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user, accessToken]);
 
     const handleAddTask = async (
         title: string,
         priority: 'low' | 'medium' | 'high',
         description?: string,
         dueDate?: string,
-        recurrence: 'daily' | 'weekly' | 'monthly' | 'none' = 'none'
+        recurrence: 'daily' | 'weekly' | 'monthly' | 'none' = 'none',
+        itemType: 'task' | 'event' = 'task'
     ) => {
         if (!user) return;
-        await addTask(user.uid, title, priority, description, dueDate, accessToken, recurrence);
+        await addTask(user.uid, title, priority, description, dueDate, accessToken, recurrence, itemType);
     };
 
     const handleToggleTask = async (task: Task) => {
@@ -44,7 +50,7 @@ export default function Tasks() {
 
     const handleDeleteTask = async (task: Task) => {
         if (!user || !window.confirm('Delete this task?')) return;
-        await deleteTask(user.uid, task.id, task.googleCalendarEventId, accessToken);
+        await deleteTask(user.uid, task, accessToken);
     };
 
     const filteredTasks = tasks.filter(task => {
