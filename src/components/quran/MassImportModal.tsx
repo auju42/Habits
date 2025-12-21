@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Upload, FileText, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-import { markPageAsMemorized } from '../../services/quranService';
+import { markMultiplePagesAsMemorized } from '../../services/quranService';
 import type { QuranProgress } from '../../types/quran';
 import { getJuzPageRange } from '../../types/quran';
 
@@ -33,20 +33,14 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
         setImporting(true);
         setResult(null);
 
-        let success = 0;
-        let failed = 0;
+        const pagesToUpdate: Record<number, string> = {};
 
         if (importMode === 'juz') {
             // Import all pages for selected Juz
             for (const juz of selectedJuz) {
                 const { start, end } = getJuzPageRange(juz);
                 for (let page = start; page <= end; page++) {
-                    try {
-                        await markPageAsMemorized(userId, page, selectedDate, progress);
-                        success++;
-                    } catch (error) {
-                        failed++;
-                    }
+                    pagesToUpdate[page] = selectedDate;
                 }
             }
         } else {
@@ -60,18 +54,22 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
                     const date = parts[1] || selectedDate;
 
                     if (page >= 1 && page <= 604) {
-                        await markPageAsMemorized(userId, page, date, progress);
-                        success++;
-                    } else {
-                        failed++;
+                        pagesToUpdate[page] = date;
                     }
                 } catch (error) {
-                    failed++;
+                    // Ignore malformed lines
                 }
             }
         }
 
-        setResult({ success, failed });
+        try {
+            await markMultiplePagesAsMemorized(userId, pagesToUpdate, progress);
+            const count = Object.keys(pagesToUpdate).length;
+            setResult({ success: count, failed: 0 });
+        } catch (error) {
+            console.error('Mass import failed:', error);
+            setResult({ success: 0, failed: Object.keys(pagesToUpdate).length });
+        }
         setImporting(false);
     };
 

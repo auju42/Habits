@@ -50,6 +50,27 @@ export const markPageAsMemorized = async (userId: string, pageNumber: number, da
     }, { merge: true });
 };
 
+export const markMultiplePagesAsMemorized = async (userId: string, pages: Record<number, string>, progress: QuranProgress | null) => {
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
+
+    if (!progress) {
+        await initializeQuranProgress(userId);
+    }
+
+    const currentMemorized = progress?.memorizedPages || {};
+    const newMemorized = { ...currentMemorized };
+
+    // Add all pages to the map
+    Object.entries(pages).forEach(([page, date]) => {
+        newMemorized[parseInt(page)] = date;
+    });
+
+    await setDoc(docRef, {
+        memorizedPages: newMemorized,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+};
+
 export const logJuzReview = async (userId: string, juzNumber: number, date: string, progress: QuranProgress | null) => {
     const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
 
