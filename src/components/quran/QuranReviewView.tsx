@@ -83,7 +83,7 @@ export default function QuranReviewView({ userId, progress }: Props) {
         <div className="space-y-6">
             {/* Date Selector with Enter Reviews Button */}
             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     {/* Date Navigation */}
                     <div className="flex items-center gap-2">
                         <button
@@ -92,8 +92,8 @@ export default function QuranReviewView({ userId, progress }: Props) {
                         >
                             <ChevronLeft size={18} />
                         </button>
-                        <div className="flex items-center gap-2 min-w-[180px] justify-center">
-                            <span className="text-base font-medium text-gray-800 dark:text-white">
+                        <div className="flex items-center gap-2 min-w-[140px] sm:min-w-[180px] justify-center">
+                            <span className="text-sm sm:text-base font-medium text-gray-800 dark:text-white">
                                 {format(selectedDate, 'EEE, MMM d, yyyy')}
                             </span>
                             {selectedDateHasReviews && (
@@ -112,10 +112,10 @@ export default function QuranReviewView({ userId, progress }: Props) {
                     {/* Enter Reviews Button */}
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-green-500/20"
+                        className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-green-500/20 w-full sm:w-auto"
                     >
                         <CalendarPlus size={16} />
-                        Enter Reviews
+                        <span className="sm:inline">Enter Reviews</span>
                     </button>
                 </div>
             </div>
@@ -186,10 +186,8 @@ export default function QuranReviewView({ userId, progress }: Props) {
                     // Chunk dots for display
                     const dotRows: Array<typeof historyDots> = [];
                     if (viewMode === 'month') {
-                        dotRows.push(historyDots.slice(0, 10));
-                        dotRows.push(historyDots.slice(10, 20));
-                        const rest = historyDots.slice(20);
-                        if (rest.length > 0) dotRows.push(rest);
+                        // Single row for month view - let flex-wrap handle layout
+                        dotRows.push(historyDots);
                     } else {
                         let currentMonth = -1;
                         let currentRow: typeof historyDots = [];

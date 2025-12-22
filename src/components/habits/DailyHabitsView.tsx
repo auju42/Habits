@@ -11,6 +11,7 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
+    TouchSensor,
     useSensor,
     useSensors,
     type DragEndEvent
@@ -71,6 +72,12 @@ export default function DailyHabitsView() {
         useSensor(PointerSensor, {
             activationConstraint: {
                 distance: 8,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 200,
+                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {
@@ -135,12 +142,13 @@ export default function DailyHabitsView() {
 
     const handleContextMenu = (e: React.MouseEvent, habit: Habit) => {
         e.preventDefault();
-        e.stopPropagation(); // Prevent closing immediately
-        setContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-            habit
-        });
+        e.stopPropagation();
+        // Clamp position to viewport
+        const menuWidth = 220;
+        const menuHeight = 200;
+        const x = Math.min(e.clientX, window.innerWidth - menuWidth - 10);
+        const y = Math.min(e.clientY, window.innerHeight - menuHeight - 10);
+        setContextMenu({ x: Math.max(10, x), y: Math.max(10, y), habit });
     };
 
     const handleColorChange = async (color: string) => {

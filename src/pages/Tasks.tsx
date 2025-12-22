@@ -13,7 +13,7 @@ export default function Tasks() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<FilterType>('all');
+    const [filter, setFilter] = useState<FilterType>('active');
 
     useEffect(() => {
         if (!user) return;

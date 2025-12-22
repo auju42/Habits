@@ -10,6 +10,7 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
+    TouchSensor,
     useSensor,
     useSensors,
     type DragEndEvent
@@ -158,6 +159,7 @@ export default function HabitGridView() {
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
@@ -209,11 +211,11 @@ export default function HabitGridView() {
     const handleContextMenu = (e: React.MouseEvent, habit: Habit) => {
         e.preventDefault();
         e.stopPropagation();
-        setContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-            habit
-        });
+        const menuWidth = 220;
+        const menuHeight = 200;
+        const x = Math.min(e.clientX, window.innerWidth - menuWidth - 10);
+        const y = Math.min(e.clientY, window.innerHeight - menuHeight - 10);
+        setContextMenu({ x: Math.max(10, x), y: Math.max(10, y), habit });
     };
 
     const handleColorChange = async (color: string) => {
