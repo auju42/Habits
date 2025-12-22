@@ -4,14 +4,15 @@
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-// Firebase config - will be replaced by actual values at build time
+// IMPORTANT: Replace these with your actual Firebase config values
+// You can find these in your Firebase Console > Project Settings > General
 firebase.initializeApp({
-    apiKey: 'PLACEHOLDER', // Replaced at runtime
-    authDomain: 'PLACEHOLDER',
-    projectId: 'PLACEHOLDER',
-    storageBucket: 'PLACEHOLDER',
-    messagingSenderId: 'PLACEHOLDER',
-    appId: 'PLACEHOLDER'
+    apiKey: 'AIzaSyBZ9CjPPTC2jnFMj3gDxl_MNp1s6ZCjvwg',
+    authDomain: 'habit-tracker-e81f4.firebaseapp.com',
+    projectId: 'habit-tracker-e81f4',
+    storageBucket: 'habit-tracker-e81f4.firebasestorage.app',
+    messagingSenderId: '183255939378',
+    appId: '1:183255939378:web:167747ed7c3608f85b7f2b'
 });
 
 const messaging = firebase.messaging();
