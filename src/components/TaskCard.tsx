@@ -1,4 +1,4 @@
-import { Check, Trash2, Calendar, RefreshCw, CheckSquare } from 'lucide-react';
+import { Check, Trash2, Calendar, RefreshCw, CheckSquare, Clock } from 'lucide-react';
 import type { Task } from '../types';
 import { cn } from '../lib/utils';
 import { format, parseISO, isPast, isToday } from 'date-fns';
@@ -79,7 +79,13 @@ export default function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
                                 !isOverdue && !isDueToday && "text-gray-500 dark:text-gray-400"
                             )}>
                                 <Calendar className="w-3 h-3" />
-                                {format(parseISO(task.dueDate), 'MMM d')}
+                                {format(parseISO(task.dueDate), 'dd/MM')}
+                                {task.dueTime && (
+                                    <>
+                                        <Clock className="w-3 h-3 ml-1" />
+                                        {task.dueTime}
+                                    </>
+                                )}
                                 {isOverdue && ' (overdue)'}
                                 {isDueToday && !task.completed && ' (today)'}
                             </span>

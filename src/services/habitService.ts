@@ -56,7 +56,8 @@ export const addHabit = async (
     habitType: 'simple' | 'count' = 'simple',
     dailyGoal?: number,
     isQuitting?: boolean,
-    color?: string
+    color?: string,
+    reminderTime?: string
 ) => {
     await addDoc(collection(db, `users/${userId}/${COLLECTION_NAME}`), {
         userId,
@@ -70,6 +71,7 @@ export const addHabit = async (
         isQuitting: isQuitting || false,
         color: color || '#3B82F6', // Default blue if not provided
         order: Date.now(), // Use timestamp as simple default order to put new ones at bottom
+        reminderTime: reminderTime || null,
     });
 };
 

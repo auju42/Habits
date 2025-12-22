@@ -19,6 +19,7 @@ export interface Habit {
     dailyProgress: Record<string, number>; // YYYY-MM-DD -> count
     isQuitting?: boolean; // If true, success = NOT doing the habit
     order?: number;
+    reminderTime?: string; // HH:mm - Daily reminder time
 }
 
 export interface HabitStats {
@@ -36,9 +37,11 @@ export interface Task {
     completed: boolean;
     priority: 'low' | 'medium' | 'high';
     dueDate?: string; // YYYY-MM-DD
+    dueTime?: string; // HH:mm - Time for the task
     createdAt: number; // Timestamp
     itemType: 'task' | 'event'; // task → local only, event → Google Calendar
     googleCalendarEventId?: string; // For Google Calendar sync
     recurrence?: 'daily' | 'weekly' | 'monthly' | 'none';
     isRecurring?: boolean;
 }
+

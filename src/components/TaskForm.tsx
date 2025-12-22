@@ -8,6 +8,7 @@ interface TaskFormProps {
         priority: 'low' | 'medium' | 'high',
         description?: string,
         dueDate?: string,
+        dueTime?: string,
         recurrence?: 'daily' | 'weekly' | 'monthly' | 'none',
         itemType?: 'task' | 'event'
     ) => Promise<void>;
@@ -18,6 +19,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
     const [description, setDescription] = useState('');
     const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
     const [dueDate, setDueDate] = useState('');
+    const [dueTime, setDueTime] = useState('');
     const [recurrence, setRecurrence] = useState<'daily' | 'weekly' | 'monthly' | 'none'>('none');
     const [itemType, setItemType] = useState<'task' | 'event'>('task');
     const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
 
         setLoading(true);
         try {
-            await onSubmit(title, priority, description || undefined, dueDate || undefined, recurrence, itemType);
+            await onSubmit(title, priority, description || undefined, dueDate || undefined, dueTime || undefined, recurrence, itemType);
             onClose();
         } catch (error) {
             console.error(error);
@@ -144,16 +146,30 @@ export default function TaskForm({ onClose, onSubmit }: TaskFormProps) {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {itemType === 'event' ? 'Date' : 'Due Date'}
-                        </label>
-                        <input
-                            type="date"
-                            value={dueDate}
-                            onChange={(e) => setDueDate(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {itemType === 'event' ? 'Date' : 'Due Date'}
+                            </label>
+                            <input
+                                type="date"
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Time
+                            </label>
+                            <input
+                                type="time"
+                                value={dueTime}
+                                onChange={(e) => setDueTime(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            />
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">

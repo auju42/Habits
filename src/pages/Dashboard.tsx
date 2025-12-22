@@ -34,9 +34,9 @@ export default function Dashboard() {
         };
     }, [user]);
 
-    const handleAddHabit = async (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean) => {
+    const handleAddHabit = async (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean, color?: string, reminderTime?: string) => {
         if (!user) return;
-        await addHabit(user.uid, name, habitType, dailyGoal, isQuitting);
+        await addHabit(user.uid, name, habitType, dailyGoal, isQuitting, color, reminderTime);
     };
 
     const handleToggleHabit = async (habit: Habit, date: string) => {
@@ -239,7 +239,7 @@ export default function Dashboard() {
                                                 {task.title}
                                             </p>
                                             {task.dueDate && (
-                                                <p className="text-xs text-gray-500">{format(parseISO(task.dueDate), 'MMM d')}</p>
+                                                <p className="text-xs text-gray-500">{format(parseISO(task.dueDate), 'dd/MM')}</p>
                                             )}
                                         </div>
                                         <span className={cn(

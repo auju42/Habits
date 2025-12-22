@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { registerForPushNotifications } from '../services/notificationService';
 
 export interface EnabledModules {
     habits: boolean;
@@ -34,12 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [hasCompletedSetup, setHasCompletedSetup] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
 
             if (currentUser) {
                 // Load enabled modules for this user
-                const savedModules = localStorage.getItem(`modules_${currentUser.uid}`);
+                const savedModules = localStorage.getItem(`modules_${currentUser.uid} `);
                 if (savedModules) {
                     try {
                         setEnabledModules(JSON.parse(savedModules));
@@ -51,8 +52,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
 
                 // Check if user has completed setup
-                const setupComplete = localStorage.getItem(`setup_complete_${currentUser.uid}`);
+                const setupComplete = localStorage.getItem(`setup_complete_${currentUser.uid} `);
                 setHasCompletedSetup(setupComplete === 'true');
+
+                // Register for push notifications
+                try {
+                    await registerForPushNotifications(currentUser.uid);
+                } catch (error) {
+                    console.warn('Failed to register for push notifications:', error);
+                }
             } else {
                 setEnabledModules(DEFAULT_MODULES);
                 setHasCompletedSetup(false);
@@ -101,21 +109,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newModules = { ...enabledModules, [module]: enabled };
         setEnabledModules(newModules);
         if (user) {
-            localStorage.setItem(`modules_${user.uid}`, JSON.stringify(newModules));
+            localStorage.setItem(`modules_${user.uid} `, JSON.stringify(newModules));
         }
     };
 
     const setAllModules = (modules: EnabledModules) => {
         setEnabledModules(modules);
         if (user) {
-            localStorage.setItem(`modules_${user.uid}`, JSON.stringify(modules));
+            localStorage.setItem(`modules_${user.uid} `, JSON.stringify(modules));
         }
     };
 
     const completeSetup = () => {
         setHasCompletedSetup(true);
         if (user) {
-            localStorage.setItem(`setup_complete_${user.uid}`, 'true');
+            localStorage.setItem(`setup_complete_${user.uid} `, 'true');
         }
     };
 

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { X, Target, Ban } from 'lucide-react';
+import { X, Target, Ban, Bell } from 'lucide-react';
 
 interface HabitFormProps {
     onClose: () => void;
-    onSubmit: (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean, color?: string) => Promise<void>;
+    onSubmit: (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean, color?: string, reminderTime?: string) => Promise<void>;
 }
 
 export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
@@ -12,6 +12,7 @@ export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
     const [dailyGoal, setDailyGoal] = useState(3);
     const [isQuitting, setIsQuitting] = useState(false);
     const [selectedColor, setSelectedColor] = useState('#3B82F6');
+    const [reminderTime, setReminderTime] = useState('');
     const [loading, setLoading] = useState(false);
 
     const colors = [
@@ -31,7 +32,7 @@ export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
 
         setLoading(true);
         try {
-            await onSubmit(name, habitType, habitType === 'count' ? dailyGoal : undefined, isQuitting, selectedColor);
+            await onSubmit(name, habitType, habitType === 'count' ? dailyGoal : undefined, isQuitting, selectedColor, reminderTime || undefined);
             onClose();
         } catch (error) {
             console.error(error);
@@ -176,6 +177,23 @@ export default function HabitForm({ onClose, onSubmit }: HabitFormProps) {
                             </div>
                         </div>
                     )}
+
+                    {/* Reminder Time */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <Bell className="w-4 h-4 inline mr-1" />
+                            Daily Reminder (optional)
+                        </label>
+                        <input
+                            type="time"
+                            value={reminderTime}
+                            onChange={(e) => setReminderTime(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Set a time to receive a daily reminder for this habit
+                        </p>
+                    </div>
 
                     <div className="flex justify-end gap-3 pt-2">
                         <button

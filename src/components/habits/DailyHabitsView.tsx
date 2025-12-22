@@ -94,9 +94,9 @@ export default function DailyHabitsView() {
         return () => window.removeEventListener('click', handleClick);
     }, []);
 
-    const handleAddHabit = async (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean, color?: string) => {
+    const handleAddHabit = async (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean, color?: string, reminderTime?: string) => {
         if (!user) return;
-        await addHabit(user.uid, name, habitType, dailyGoal, isQuitting, color);
+        await addHabit(user.uid, name, habitType, dailyGoal, isQuitting, color, reminderTime);
     };
 
     const handleToggleHabit = async (habit: Habit, date: string) => {

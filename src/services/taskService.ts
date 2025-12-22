@@ -37,6 +37,7 @@ export const addTask = async (
     priority: 'low' | 'medium' | 'high' = 'medium',
     description?: string,
     dueDate?: string,
+    dueTime?: string,
     accessToken?: string | null,
     recurrence: 'daily' | 'weekly' | 'monthly' | 'none' = 'none',
     itemType: 'task' | 'event' = 'task'
@@ -59,6 +60,7 @@ export const addTask = async (
         completed: false,
         priority,
         dueDate: dueDate || null,
+        dueTime: dueTime || null,
         createdAt: serverTimestamp(),
         itemType,
         googleCalendarEventId,
@@ -95,6 +97,7 @@ export const toggleTaskCompletion = async (
             task.priority,
             task.description,
             nextDueDate,
+            task.dueTime,
             accessToken,
             task.recurrence,
             task.itemType

@@ -31,11 +31,12 @@ export default function Tasks() {
         priority: 'low' | 'medium' | 'high',
         description?: string,
         dueDate?: string,
+        dueTime?: string,
         recurrence: 'daily' | 'weekly' | 'monthly' | 'none' = 'none',
         itemType: 'task' | 'event' = 'task'
     ) => {
         if (!user) return;
-        await addTask(user.uid, title, priority, description, dueDate, accessToken, recurrence, itemType);
+        await addTask(user.uid, title, priority, description, dueDate, dueTime, accessToken, recurrence, itemType);
     };
 
     const handleToggleTask = async (task: Task) => {
