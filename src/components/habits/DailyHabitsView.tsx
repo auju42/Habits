@@ -11,6 +11,7 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
+    TouchSensor,
     useSensor,
     useSensors,
     type DragEndEvent
@@ -41,7 +42,7 @@ function SortableHabitItem({ habit, onToggle, onIncrement, onDecrement, onContex
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 50 : 'auto',
         position: 'relative' as const,
-        touchAction: 'none' as const, // Critical for mobile drag
+        // touchAction: 'none' REMOVED to allow scrolling. Drag will be handled by Sensor delay.
     };
 
     return (
@@ -72,6 +73,13 @@ export default function DailyHabitsView() {
         useSensor(PointerSensor, {
             activationConstraint: {
                 distance: 8,
+            },
+        }),
+        useSensor(TouchSensor, {
+            // Touch sensor with delay for "Hold to Drag"
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {

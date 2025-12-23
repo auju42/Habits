@@ -1,5 +1,5 @@
 // ... imports
-import { Check, Flame, Plus, Minus, Ban, Shield, GripVertical } from 'lucide-react';
+import { Check, Flame, Plus, Minus, Ban, Shield, MoreVertical } from 'lucide-react';
 import type { Habit } from '../types';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
@@ -51,16 +51,23 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
             )}
             style={{
                 borderLeftWidth: '4px',
-                borderLeftColor: habitColor
+                borderLeftColor: habitColor,
+                touchAction: 'manipulation' // Allow scrolling, but likely handled by parent style too
             }}
+            {...dragHandleProps} // Spread props to make whole card draggable
         >
             <div className="flex items-center justify-between">
-                {/* Drag Handle (Conditional if props provided) */}
-                {dragHandleProps && (
-                    <div {...dragHandleProps} className="mr-2 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600">
-                        <GripVertical className="w-5 h-5" />
-                    </div>
-                )}
+                {/* Context Menu Trigger */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent drag/click on parent
+                        onContextMenu?.(e, habit);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
+                    className="mr-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                >
+                    <MoreVertical className="w-5 h-5" />
+                </button>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -99,14 +106,16 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
                     {habit.habitType === 'count' ? (
                         <>
                             <button
-                                onClick={() => onDecrement?.(habit, todayStr)}
+                                onClick={(e) => { e.stopPropagation(); onDecrement?.(habit, todayStr); }}
+                                onPointerDown={(e) => e.stopPropagation()}
                                 disabled={currentProgress <= 0}
                                 className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <Minus className="w-4 h-4" />
                             </button>
                             <button
-                                onClick={() => onIncrement?.(habit, todayStr)}
+                                onClick={(e) => { e.stopPropagation(); onIncrement?.(habit, todayStr); }}
+                                onPointerDown={(e) => e.stopPropagation()}
                                 className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 text-white shadow-lg"
                                 style={{
                                     backgroundColor: habitColor,
@@ -118,7 +127,8 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
                         </>
                     ) : (
                         <button
-                            onClick={() => onToggle(habit, todayStr)}
+                            onClick={(e) => { e.stopPropagation(); onToggle(habit, todayStr); }}
+                            onPointerDown={(e) => e.stopPropagation()}
                             className={cn(
                                 "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200",
                                 !showAsCompleted && "bg-gray-100 dark:bg-gray-700 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"

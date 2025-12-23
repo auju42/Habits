@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit } from '../../services/habitService';
 import type { Habit } from '../../types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isToday, addMonths, subMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Ban, Trash2, GripVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Ban, Trash2, MoreVertical } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
     DndContext,
@@ -47,16 +47,27 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
     return (
         <div
             ref={setNodeRef}
-            style={style}
             className={cn(
                 "bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm relative group",
                 isDragging && "ring-2 ring-blue-500 shadow-xl"
             )}
             onContextMenu={(e) => onContextMenu(e, habit)}
+            {...attributes}
+            {...listeners} // Whole card draggable
+            style={{ ...style, touchAction: 'manipulation' }}
         >
-            {/* Drag Handle - Absolutely positioned or in header */}
-            <div {...attributes} {...listeners} className="absolute top-4 right-4 z-10 p-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-lg opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing hover:bg-white dark:hover:bg-gray-700 transition-all">
-                <GripVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+            {/* More Button */}
+            <div className="absolute top-4 right-4 z-10">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onContextMenu(e, habit);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    className="p-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-gray-700 transition-all text-gray-400 dark:text-gray-500"
+                >
+                    <MoreVertical className="w-4 h-4" />
+                </button>
             </div>
 
             <div className={`p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between ${habit.isQuitting ? 'bg-red-50 dark:bg-red-900/10' : ''
@@ -163,7 +174,7 @@ export default function HabitCalendarView() {
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-        useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 

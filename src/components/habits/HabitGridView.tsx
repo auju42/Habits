@@ -3,13 +3,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit } from '../../services/habitService';
 import type { Habit } from '../../types';
 import { format, subDays, addDays, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Flame, Trophy, GripVertical, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Trophy, MoreVertical, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
     DndContext,
     closestCenter,
     KeyboardSensor,
     PointerSensor,
+    TouchSensor,
     useSensor,
     useSensors,
     type DragEndEvent
@@ -40,7 +41,7 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
         zIndex: isDragging ? 50 : 'auto',
         position: 'relative' as const,
         opacity: isDragging ? 0.5 : 1,
-        touchAction: 'none' as const, // Critical for mobile drag drag handles
+        // touchAction: 'none' // Removed to allow scrolling
     };
 
     const habitColor = habit.color || '#3B82F6';
@@ -50,18 +51,30 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
     return (
         <div
             ref={setNodeRef}
-            style={style}
             className={cn(
                 "grid grid-cols-[200px_1fr_100px] hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors group bg-white dark:bg-gray-800",
                 isDragging && "shadow-lg ring-1 ring-blue-500/20"
             )}
             onContextMenu={(e) => onContextMenu(e, habit)}
+            {...attributes}
+            {...listeners} // Make whole row draggable
+            style={{
+                ...style,
+                touchAction: 'manipulation'
+            }}
         >
-            {/* Habit Name & Drag Handle */}
+            {/* Habit Name & Context Menu */}
             <div className="p-4 flex items-center gap-2 border-r border-transparent border-b border-gray-50 dark:border-gray-800">
-                <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 mr-1">
-                    <GripVertical className="w-4 h-4" />
-                </div>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onContextMenu(e, habit);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    className="mr-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors"
+                >
+                    <MoreVertical className="w-4 h-4" />
+                </button>
                 <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: habitColor }} />
                 <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={habit.name}>
@@ -161,6 +174,7 @@ export default function HabitGridView() {
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
