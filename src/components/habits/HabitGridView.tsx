@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit } from '../../services/habitService';
 import type { Habit } from '../../types';
 import { format, subDays, addDays, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Flame, Trophy, MoreVertical, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Trophy, MoreVertical, Trash2, Move } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
     DndContext,
@@ -24,8 +24,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// Sortable Row Component
-function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onContextMenu }: any) {
+// Sortable Row Component (or Static Row when not in reposition mode)
+function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onContextMenu, isRepositionMode }: any) {
     const {
         attributes,
         listeners,
@@ -33,7 +33,7 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
         transform,
         transition,
         isDragging
-    } = useSortable({ id: habit.id });
+    } = useSortable({ id: habit.id, disabled: !isRepositionMode });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -41,7 +41,6 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
         zIndex: isDragging ? 50 : 'auto',
         position: 'relative' as const,
         opacity: isDragging ? 0.5 : 1,
-        // touchAction: 'none' // Removed to allow scrolling
     };
 
     const habitColor = habit.color || '#3B82F6';
@@ -52,36 +51,34 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
         <div
             ref={setNodeRef}
             className={cn(
-                "grid grid-cols-[200px_1fr_100px] hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors group bg-white dark:bg-gray-800",
+                "grid grid-cols-[100px_1fr_60px] sm:grid-cols-[160px_1fr_80px] md:grid-cols-[200px_1fr_100px] hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors group bg-white dark:bg-gray-800",
                 isDragging && "shadow-lg ring-1 ring-blue-500/20"
             )}
-            onContextMenu={(e) => onContextMenu(e, habit)}
-            {...attributes}
-            {...listeners} // Make whole row draggable
+            {...(isRepositionMode ? { ...attributes, ...listeners } : {})}
             style={{
-                ...style,
+                ...(isRepositionMode ? style : {}),
                 touchAction: 'manipulation'
             }}
         >
             {/* Habit Name & Context Menu */}
-            <div className="p-4 flex items-center gap-2 border-r border-transparent border-b border-gray-50 dark:border-gray-800">
+            <div className="p-2 sm:p-3 md:p-4 flex items-center gap-1 sm:gap-2 border-r border-transparent border-b border-gray-50 dark:border-gray-800">
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         onContextMenu(e, habit);
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
-                    className="mr-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors"
+                    className="text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-0.5 sm:p-1 transition-colors flex-shrink-0"
                 >
-                    <MoreVertical className="w-4 h-4" />
+                    <MoreVertical className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
-                <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: habitColor }} />
-                <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={habit.name}>
+                <div className="w-1 sm:w-1.5 h-6 sm:h-8 rounded-full flex-shrink-0" style={{ backgroundColor: habitColor }} />
+                <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate" title={habit.name}>
                         {habit.name}
                     </p>
                     {habit.habitType === 'count' && (
-                        <p className="text-xs text-gray-400">
+                        <p className="text-[10px] sm:text-xs text-gray-400 hidden sm:block">
                             Goal: {habit.dailyGoal}
                         </p>
                     )}
@@ -97,7 +94,6 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                     const dailyGoal = habit.dailyGoal || 1;
 
                     let opacity = 0;
-                    let isPartial = false;
 
                     if (habit.habitType === 'simple') {
                         if (isCompleted) opacity = 1;
@@ -109,7 +105,7 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                             if (countProgress >= dailyGoal) {
                                 opacity = 1;
                             } else {
-                                opacity = 0; // Binary state: only show when goal reached
+                                opacity = 0;
                             }
                         }
                     }
@@ -128,13 +124,19 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                         >
                             <div
                                 className={cn(
-                                    "w-full h-full transition-all duration-300 transform",
+                                    "w-full h-full transition-all duration-300 transform flex items-center justify-center",
                                     opacity > 0 ? "scale-90 rounded-md" : "hover:bg-gray-100 dark:hover:bg-gray-700/50 scale-50 rounded-full"
                                 )}
                                 style={opacity > 0 ? cellStyle : undefined}
                             >
-                                {isPartial && (
-                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-black/20" style={{ width: `${opacity * 100}%` }} />
+                                {/* Count indicator */}
+                                {habit.habitType === 'count' && countProgress > 0 && (
+                                    <span className={cn(
+                                        "text-[9px] sm:text-[10px] font-bold",
+                                        opacity > 0 ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" : "text-gray-500 dark:text-gray-400"
+                                    )}>
+                                        {countProgress}
+                                    </span>
                                 )}
                             </div>
                         </button>
@@ -143,24 +145,25 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
             </div>
 
             {/* Stats Column */}
-            <div className="flex items-center gap-3 px-4 border-l border-dashed border-gray-100 dark:border-gray-700 w-[120px] border-b border-gray-50 dark:border-gray-800">
+            <div className="flex items-center gap-1 sm:gap-3 px-1 sm:px-4 border-l border-dashed border-gray-100 dark:border-gray-700 border-b border-gray-50 dark:border-gray-800">
                 <div className="flex flex-col items-center flex-1">
-                    <div className="flex items-center gap-1 text-orange-500 mb-0.5">
-                        <Flame className="w-3 h-3" />
-                        <span className="text-xs font-bold">{currentStreak}</span>
+                    <div className="flex items-center gap-0.5 sm:gap-1 text-orange-500 mb-0.5">
+                        <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                        <span className="text-[10px] sm:text-xs font-bold">{currentStreak}</span>
                     </div>
                 </div>
-                <div className="w-px h-8 bg-gray-100 dark:bg-gray-700" />
+                <div className="w-px h-6 sm:h-8 bg-gray-100 dark:bg-gray-700" />
                 <div className="flex flex-col items-center flex-1">
-                    <div className="flex items-center gap-1 text-green-500 mb-0.5">
-                        <Trophy className="w-3 h-3" />
-                        <span className="text-xs font-bold">{totalCount}</span>
+                    <div className="flex items-center gap-0.5 sm:gap-1 text-green-500 mb-0.5">
+                        <Trophy className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                        <span className="text-[10px] sm:text-xs font-bold">{totalCount}</span>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
 
 export default function HabitGridView() {
     const { user } = useAuth();
@@ -171,6 +174,9 @@ export default function HabitGridView() {
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, habit: Habit } | null>(null);
+
+    // Reposition Mode State
+    const [isRepositionMode, setIsRepositionMode] = useState(false);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -278,15 +284,29 @@ export default function HabitGridView() {
                         <ChevronRight className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
-                <div className="text-sm text-gray-500">
-                    {format(dates[0], 'MMM d')} - {format(dates[dates.length - 1], 'MMM d, yyyy')}
+                <div className="flex items-center gap-2">
+                    <div className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+                        {format(dates[0], 'MMM d')} - {format(dates[dates.length - 1], 'MMM d, yyyy')}
+                    </div>
+                    <button
+                        onClick={() => setIsRepositionMode(!isRepositionMode)}
+                        className={cn(
+                            "flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all",
+                            isRepositionMode
+                                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                                : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        )}
+                    >
+                        <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">{isRepositionMode ? 'Done' : 'Reorder'}</span>
+                    </button>
                 </div>
             </div>
 
             <div className="overflow-x-auto">
                 <div className="min-w-max">
                     {/* Grid Header */}
-                    <div className="grid grid-cols-[200px_1fr_100px] border-b border-gray-100 dark:border-gray-700">
+                    <div className="grid grid-cols-[100px_1fr_60px] sm:grid-cols-[160px_1fr_80px] md:grid-cols-[200px_1fr_100px] border-b border-gray-100 dark:border-gray-700">
                         <div className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             Habit
                         </div>
@@ -327,6 +347,7 @@ export default function HabitGridView() {
                                         DAYS_TO_SHOW={DAYS_TO_SHOW}
                                         handleCellClick={handleCellClick}
                                         onContextMenu={handleContextMenu}
+                                        isRepositionMode={isRepositionMode}
                                     />
                                 ))}
                             </div>

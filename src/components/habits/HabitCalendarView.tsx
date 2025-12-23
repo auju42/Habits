@@ -153,6 +153,17 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
                                 )}>
                                     {format(day, 'd')}
                                 </span>
+                                {/* Count indicator for count habits */}
+                                {habit.habitType === 'count' && countProgress > 0 && (
+                                    <span className={cn(
+                                        "text-[9px] font-bold z-10",
+                                        (style.backgroundColor || style.background || bgClass === "bg-green-500" || bgClass === "bg-red-500")
+                                            ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]"
+                                            : "text-gray-500 dark:text-gray-400"
+                                    )}>
+                                        {countProgress}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}

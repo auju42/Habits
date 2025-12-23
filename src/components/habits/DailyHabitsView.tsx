@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Plus, Flame, CheckCircle, Target, Trash2 } from 'lucide-react';
+import { Plus, Flame, CheckCircle, Target, Trash2, Pencil } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { subscribeToHabits, addHabit, toggleHabitCompletion, deleteHabit, incrementHabitProgress, decrementHabitProgress, reorderHabits, updateHabit } from '../../services/habitService';
 import type { Habit } from '../../types';
 import HabitCard from '../../components/HabitCard';
 import HabitForm from '../../components/HabitForm';
+import HabitEditForm from '../../components/HabitEditForm';
 import { format } from 'date-fns';
 import {
     DndContext,
@@ -67,6 +68,9 @@ export default function DailyHabitsView() {
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, habit: Habit } | null>(null);
+
+    // Edit Form State
+    const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
 
     const sensors = useSensors(
@@ -159,6 +163,12 @@ export default function DailyHabitsView() {
         setContextMenu(null);
     };
 
+    const handleEditHabit = async (updates: { name: string; reminderTime?: string }) => {
+        if (!user || !editingHabit) return;
+        await updateHabit(user.uid, editingHabit.id, updates);
+        setEditingHabit(null);
+    };
+
     // Colors list
     const colors = [
         '#3B82F6', '#EF4444', '#10B981', '#F59E0B',
@@ -211,37 +221,37 @@ export default function DailyHabitsView() {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/20">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                            <Target className="w-5 h-5" />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="p-1.5 sm:p-2 bg-white/20 rounded-lg">
+                            <Target className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                         <div>
-                            <p className="text-blue-100 text-sm">Today's Progress</p>
-                            <p className="text-2xl font-bold">{progressPercent}%</p>
+                            <p className="text-blue-100 text-[10px] sm:text-sm hidden sm:block">Today's Progress</p>
+                            <p className="text-lg sm:text-2xl font-bold">{progressPercent}%</p>
                         </div>
                     </div>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg shadow-green-500/20">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                            <CheckCircle className="w-5 h-5" />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="p-1.5 sm:p-2 bg-white/20 rounded-lg">
+                            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                         <div>
-                            <p className="text-green-100 text-sm">Completed</p>
-                            <p className="text-2xl font-bold">{completedToday}/{totalHabits}</p>
+                            <p className="text-green-100 text-[10px] sm:text-sm hidden sm:block">Completed</p>
+                            <p className="text-lg sm:text-2xl font-bold">{completedToday}/{totalHabits}</p>
                         </div>
                     </div>
                 </div>
                 <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/20">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                            <Flame className="w-5 h-5" />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="p-1.5 sm:p-2 bg-white/20 rounded-lg">
+                            <Flame className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                         <div>
-                            <p className="text-orange-100 text-sm">Total Streaks</p>
-                            <p className="text-2xl font-bold">{totalStreak}</p>
+                            <p className="text-orange-100 text-[10px] sm:text-sm hidden sm:block">Total Streaks</p>
+                            <p className="text-lg sm:text-2xl font-bold">{totalStreak}</p>
                         </div>
                     </div>
                 </div>
@@ -278,7 +288,7 @@ export default function DailyHabitsView() {
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext items={habits.map(h => h.id)} strategy={verticalListSortingStrategy}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                                 {habits.map((habit) => (
                                     <SortableHabitItem
                                         key={habit.id}
@@ -331,6 +341,17 @@ export default function DailyHabitsView() {
                     <div className="h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
 
                     <button
+                        onClick={() => {
+                            setEditingHabit(contextMenu.habit);
+                            setContextMenu(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                        <Pencil className="w-4 h-4" />
+                        Edit Habit
+                    </button>
+
+                    <button
                         onClick={handleDeleteHabit}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                     >
@@ -339,6 +360,15 @@ export default function DailyHabitsView() {
                     </button>
 
                 </div>
+            )}
+
+            {/* Edit Habit Form */}
+            {editingHabit && (
+                <HabitEditForm
+                    habit={editingHabit}
+                    onClose={() => setEditingHabit(null)}
+                    onSubmit={handleEditHabit}
+                />
             )}
         </div>
     );
