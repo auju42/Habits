@@ -10,7 +10,6 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
-    TouchSensor,
     useSensor,
     useSensors,
     type DragEndEvent
@@ -94,9 +93,11 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                             if (countProgress <= dailyGoal) opacity = 1;
                             else opacity = 0;
                         } else {
-                            const percent = Math.min(1, countProgress / dailyGoal);
-                            opacity = percent;
-                            if (percent > 0 && percent < 1) isPartial = true;
+                            if (countProgress >= dailyGoal) {
+                                opacity = 1;
+                            } else {
+                                opacity = 0; // Binary state: only show when goal reached
+                            }
                         }
                     }
 
@@ -160,7 +161,6 @@ export default function HabitGridView() {
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-        useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 

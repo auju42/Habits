@@ -186,9 +186,8 @@ export default function QuranReviewView({ userId, progress }: Props) {
                     // Chunk dots for display
                     const dotRows: Array<typeof historyDots> = [];
                     if (viewMode === 'month') {
-                        // Split into exactly 2 rows: 15 and remaining (15-16)
-                        dotRows.push(historyDots.slice(0, 15));
-                        dotRows.push(historyDots.slice(15));
+                        // Single row for month view - let flex-wrap handle layout
+                        dotRows.push(historyDots);
                     } else {
                         let currentMonth = -1;
                         let currentRow: typeof historyDots = [];
@@ -255,6 +254,7 @@ export default function QuranReviewView({ userId, progress }: Props) {
                 userId={userId}
                 progress={progress}
                 selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
                 onSave={handleSaveReviews}
             />
         </div>

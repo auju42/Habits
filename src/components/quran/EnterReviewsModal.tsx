@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Check, RotateCcw, Lock } from 'lucide-react';
-import { format } from 'date-fns';
+import { X, Check, RotateCcw, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, addDays, subDays } from 'date-fns';
 import type { QuranProgress } from '../../types/quran';
 import { getJuzPageRange } from '../../types/quran';
 
@@ -10,12 +10,13 @@ interface Props {
     userId: string;
     progress: QuranProgress | null;
     selectedDate: Date;
+    onDateChange: (date: Date) => void;
     onSave: (hizbNumbers: number[], date: string) => Promise<void>;
 }
 
 const TOTAL_JUZ = 30;
 
-export default function EnterReviewsModal({ isOpen, onClose, progress, selectedDate, onSave }: Props) {
+export default function EnterReviewsModal({ isOpen, onClose, progress, selectedDate, onDateChange, onSave }: Props) {
     const [selectedHizbs, setSelectedHizbs] = useState<Set<number>>(new Set());
     const [saving, setSaving] = useState(false);
 
@@ -77,32 +78,56 @@ export default function EnterReviewsModal({ isOpen, onClose, progress, selectedD
 
     const clearAll = () => setSelectedHizbs(new Set());
 
+    const handlePrevDay = () => onDateChange(subDays(selectedDate, 1));
+    const handleNextDay = () => {
+        if (addDays(selectedDate, 1) <= new Date()) {
+            onDateChange(addDays(selectedDate, 1));
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-xl">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                    <div>
+                <div className="flex flex-col border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between p-4 pb-2">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Enter Reviews</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={clearAll}
+                                className="flex items-center gap-1 text-xs px-2 py-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"
+                            >
+                                <RotateCcw size={12} />
+                                Clear
+                            </button>
+                            <button
+                                onClick={onClose}
+                                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    {/* Date Navigation */}
+                    <div className="px-4 pb-4 flex items-center justify-between">
                         <button
-                            onClick={clearAll}
-                            className="flex items-center gap-1 text-xs px-2 py-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"
+                            onClick={handlePrevDay}
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                         >
-                            <RotateCcw size={12} />
-                            Clear
+                            <ChevronLeft size={20} className="text-gray-500" />
                         </button>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                        </span>
                         <button
-                            onClick={onClose}
-                            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"
+                            onClick={handleNextDay}
+                            disabled={addDays(selectedDate, 1) > new Date()}
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-30"
                         >
-                            <X size={20} />
+                            <ChevronRight size={20} className="text-gray-500" />
                         </button>
                     </div>
                 </div>
@@ -156,27 +181,27 @@ export default function EnterReviewsModal({ isOpen, onClose, progress, selectedD
                                             onClick={() => toggleHizb(hizb1)}
                                             disabled={!canReviewH1}
                                             title={!canReviewH1 ? `Need 10+ pages memorized (${memorizedCount}/${total})` : undefined}
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition ${!canReviewH1
-                                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed dark:bg-gray-700 dark:text-gray-600'
+                                            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${!canReviewH1
+                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-600 dark:text-gray-500'
                                                 : h1Selected
-                                                    ? 'bg-green-500 text-white shadow-md shadow-green-500/20 scale-105'
-                                                    : 'bg-white border border-gray-200 text-gray-600 hover:border-green-500 hover:text-green-600 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300'
+                                                    ? 'bg-green-500 text-white'
+                                                    : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30'
                                                 }`}
                                         >
-                                            {hizb1}
+                                            H{hizb1}
                                         </button>
                                         <button
                                             onClick={() => toggleHizb(hizb2)}
                                             disabled={!canReviewH2}
                                             title={!canReviewH2 ? `Need full Juz memorized (${memorizedCount}/${total})` : undefined}
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition ${!canReviewH2
-                                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed dark:bg-gray-700 dark:text-gray-600'
+                                            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${!canReviewH2
+                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-600 dark:text-gray-500'
                                                 : h2Selected
-                                                    ? 'bg-green-500 text-white shadow-md shadow-green-500/20 scale-105'
-                                                    : 'bg-white border border-gray-200 text-gray-600 hover:border-green-500 hover:text-green-600 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300'
+                                                    ? 'bg-green-500 text-white'
+                                                    : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30'
                                                 }`}
                                         >
-                                            {hizb2}
+                                            H{hizb2}
                                         </button>
                                     </div>
 

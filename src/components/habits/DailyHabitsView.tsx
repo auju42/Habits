@@ -11,7 +11,6 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
-    TouchSensor,
     useSensor,
     useSensors,
     type DragEndEvent
@@ -73,13 +72,6 @@ export default function DailyHabitsView() {
         useSensor(PointerSensor, {
             activationConstraint: {
                 distance: 8,
-            },
-        }),
-        useSensor(TouchSensor, {
-            // Touch sensor with delay and tolerance
-            activationConstraint: {
-                delay: 200,
-                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {
