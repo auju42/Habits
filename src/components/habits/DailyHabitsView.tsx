@@ -42,6 +42,7 @@ function SortableHabitItem({ habit, onToggle, onIncrement, onDecrement, onContex
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 50 : 'auto',
         position: 'relative' as const,
+        touchAction: 'none' as const, // Critical for mobile drag
     };
 
     return (
@@ -75,6 +76,7 @@ export default function DailyHabitsView() {
             },
         }),
         useSensor(TouchSensor, {
+            // Touch sensor with delay and tolerance
             activationConstraint: {
                 delay: 200,
                 tolerance: 5,

@@ -41,6 +41,7 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
         zIndex: isDragging ? 50 : 'auto',
         position: 'relative' as const,
         opacity: isDragging ? 0.5 : 1,
+        touchAction: 'none' as const, // Critical for mobile drag drag handles
     };
 
     const habitColor = habit.color || '#3B82F6';
@@ -244,7 +245,8 @@ export default function HabitGridView() {
     }
 
     const dates = Array.from({ length: DAYS_TO_SHOW }, (_, i) => {
-        return subDays(endDate, DAYS_TO_SHOW - 1 - i);
+        // Reverse order: Today is first (index 0), then past days
+        return subDays(endDate, i);
     });
 
     return (

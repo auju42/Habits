@@ -186,8 +186,9 @@ export default function QuranReviewView({ userId, progress }: Props) {
                     // Chunk dots for display
                     const dotRows: Array<typeof historyDots> = [];
                     if (viewMode === 'month') {
-                        // Single row for month view - let flex-wrap handle layout
-                        dotRows.push(historyDots);
+                        // Split into exactly 2 rows: 15 and remaining (15-16)
+                        dotRows.push(historyDots.slice(0, 15));
+                        dotRows.push(historyDots.slice(15));
                     } else {
                         let currentMonth = -1;
                         let currentRow: typeof historyDots = [];
@@ -228,7 +229,7 @@ export default function QuranReviewView({ userId, progress }: Props) {
                                         {rowDots.map((d, idx) => (
                                             <div
                                                 key={idx}
-                                                className="w-4 h-4 rounded-sm relative overflow-hidden bg-gray-100 dark:bg-gray-700"
+                                                className="w-3 h-3 rounded-full relative overflow-hidden bg-gray-100 dark:bg-gray-700"
                                                 title={`${format(d.date, 'MMM d')}: ${d.intensity === 2 ? 'Full' : d.intensity === 1 ? 'Half' : 'None'}`}
                                             >
                                                 {d.intensity > 0 && (

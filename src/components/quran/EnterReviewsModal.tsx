@@ -156,27 +156,27 @@ export default function EnterReviewsModal({ isOpen, onClose, progress, selectedD
                                             onClick={() => toggleHizb(hizb1)}
                                             disabled={!canReviewH1}
                                             title={!canReviewH1 ? `Need 10+ pages memorized (${memorizedCount}/${total})` : undefined}
-                                            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${!canReviewH1
-                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-600 dark:text-gray-500'
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition ${!canReviewH1
+                                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed dark:bg-gray-700 dark:text-gray-600'
                                                 : h1Selected
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30'
+                                                    ? 'bg-green-500 text-white shadow-md shadow-green-500/20 scale-105'
+                                                    : 'bg-white border border-gray-200 text-gray-600 hover:border-green-500 hover:text-green-600 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300'
                                                 }`}
                                         >
-                                            H{hizb1}
+                                            {hizb1}
                                         </button>
                                         <button
                                             onClick={() => toggleHizb(hizb2)}
                                             disabled={!canReviewH2}
                                             title={!canReviewH2 ? `Need full Juz memorized (${memorizedCount}/${total})` : undefined}
-                                            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${!canReviewH2
-                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-600 dark:text-gray-500'
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition ${!canReviewH2
+                                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed dark:bg-gray-700 dark:text-gray-600'
                                                 : h2Selected
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30'
+                                                    ? 'bg-green-500 text-white shadow-md shadow-green-500/20 scale-105'
+                                                    : 'bg-white border border-gray-200 text-gray-600 hover:border-green-500 hover:text-green-600 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300'
                                                 }`}
                                         >
-                                            H{hizb2}
+                                            {hizb2}
                                         </button>
                                     </div>
 
