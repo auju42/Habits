@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth';
+import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, type User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 
@@ -14,6 +14,8 @@ interface AuthContextType {
     loading: boolean;
     accessToken: string | null;
     signInWithGoogle: () => Promise<void>;
+    signInWithEmail: (email: string, password: string) => Promise<void>;
+    signUpWithEmail: (email: string, password: string) => Promise<void>;
     signInAsGuest: () => Promise<void>;
     logout: () => Promise<void>;
     enabledModules: EnabledModules;
@@ -82,6 +84,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const signInWithEmail = async (email: string, password: string) => {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            console.error("Error signing in with email", error);
+            throw error;
+        }
+    };
+
+    const signUpWithEmail = async (email: string, password: string) => {
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            console.error("Error signing up with email", error);
+            throw error;
+        }
+    };
+
     const signInAsGuest = async () => {
         try {
             const { signInAnonymously } = await import('firebase/auth');
@@ -127,6 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         accessToken,
         signInWithGoogle,
+        signInWithEmail,
+        signUpWithEmail,
         signInAsGuest,
         logout,
         enabledModules,

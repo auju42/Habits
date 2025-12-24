@@ -87,16 +87,28 @@ export default function QuranReviewView({ userId, progress }: Props) {
                     <ChevronLeft size={18} />
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
                     <button
-                        onClick={() => setViewMode(viewMode === 'month' ? 'quarter' : 'month')}
-                        className="text-xs px-2 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition font-medium"
+                        onClick={() => setViewMode('month')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'month'
+                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                            }`}
                     >
-                        {viewMode === 'month' ? 'Quarterly' : 'Monthly'}
+                        Monthly
                     </button>
-                    <div className="text-base font-semibold text-gray-800 dark:text-white min-w-[120px] text-center">
-                        {dateLabel}
-                    </div>
+                    <button
+                        onClick={() => setViewMode('quarter')}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'quarter'
+                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                            }`}
+                    >
+                        Quarterly
+                    </button>
+                </div>
+                <div className="text-base font-semibold text-gray-800 dark:text-white min-w-[120px] text-center hidden sm:block">
+                    {dateLabel}
                 </div>
 
                 <button
@@ -180,7 +192,7 @@ export default function QuranReviewView({ userId, progress }: Props) {
                             </div>
 
                             {/* Larger Dot Calendar */}
-                            <div className="flex flex-col gap-1.5">
+                            <div className="hidden sm:flex flex-col gap-1.5">
                                 {dotRows.map((rowDots, rowIdx) => (
                                     <div key={rowIdx} className="flex gap-1 flex-wrap">
                                         {rowDots.map((d, idx) => (
