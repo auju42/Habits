@@ -51,7 +51,6 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
             style={{
                 borderLeftWidth: '4px',
                 borderLeftColor: habitColor,
-                touchAction: 'manipulation'
             }}
             {...dragHandleProps}
         >

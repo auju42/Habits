@@ -285,6 +285,9 @@ export default function DailyHabitsView() {
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
+                        onDragStart={() => {
+                            if (navigator.vibrate) navigator.vibrate(50);
+                        }}
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext items={habits.map(h => h.id)} strategy={verticalListSortingStrategy}>

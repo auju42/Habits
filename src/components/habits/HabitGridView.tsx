@@ -3,8 +3,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit } from '../../services/habitService';
 import type { Habit } from '../../types';
 import { format, subDays, addDays, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Flame, Trophy, MoreVertical, Trash2, Move } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Trophy, MoreVertical, Trash2, Pencil } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import HabitEditForm from '../../components/HabitEditForm';
 import {
     DndContext,
     closestCenter,
@@ -25,7 +26,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // Sortable Row Component (or Static Row when not in reposition mode)
-function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onContextMenu, isRepositionMode }: any) {
+function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onContextMenu }: any) {
     const {
         attributes,
         listeners,
@@ -33,7 +34,7 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
         transform,
         transition,
         isDragging
-    } = useSortable({ id: habit.id, disabled: !isRepositionMode });
+    } = useSortable({ id: habit.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -51,17 +52,17 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
         <div
             ref={setNodeRef}
             className={cn(
-                "grid grid-cols-[100px_1fr_60px] sm:grid-cols-[160px_1fr_80px] md:grid-cols-[200px_1fr_100px] hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors group bg-white dark:bg-gray-800",
+                "grid grid-cols-[120px_1fr_60px] sm:grid-cols-[160px_1fr_80px] md:grid-cols-[200px_1fr_100px] hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors group bg-white dark:bg-gray-800",
                 isDragging && "shadow-lg ring-1 ring-blue-500/20"
             )}
-            {...(isRepositionMode ? { ...attributes, ...listeners } : {})}
-            style={{
-                ...(isRepositionMode ? style : {}),
-                touchAction: 'manipulation'
-            }}
+            style={style}
         >
-            {/* Habit Name & Context Menu */}
-            <div className="p-2 sm:p-3 md:p-4 flex items-center gap-1 sm:gap-2 border-r border-transparent border-b border-gray-50 dark:border-gray-800">
+            {/* Habit Name & Context Menu - Draggable Area */}
+            <div
+                className="p-2 sm:p-3 md:p-4 flex items-center gap-1 sm:gap-2 border-r border-transparent border-b border-gray-50 dark:border-gray-800 cursor-grab active:cursor-grabbing"
+                {...attributes}
+                {...listeners}
+            >
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -175,8 +176,8 @@ export default function HabitGridView() {
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, habit: Habit } | null>(null);
 
-    // Reposition Mode State
-    const [isRepositionMode, setIsRepositionMode] = useState(false);
+    // Edit Form State
+    const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -251,6 +252,12 @@ export default function HabitGridView() {
         setContextMenu(null);
     };
 
+    const handleEditHabit = async (updates: { name: string; reminderTime?: string }) => {
+        if (!user || !editingHabit) return;
+        await updateHabit(user.uid, editingHabit.id, updates);
+        setEditingHabit(null);
+    };
+
     const colors = [
         '#3B82F6', '#EF4444', '#10B981', '#F59E0B',
         '#8B5CF6', '#EC4899', '#06B6D4', '#64748B'
@@ -284,29 +291,15 @@ export default function HabitGridView() {
                         <ChevronRight className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-                        {format(dates[0], 'MMM d')} - {format(dates[dates.length - 1], 'MMM d, yyyy')}
-                    </div>
-                    <button
-                        onClick={() => setIsRepositionMode(!isRepositionMode)}
-                        className={cn(
-                            "flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all",
-                            isRepositionMode
-                                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                                : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        )}
-                    >
-                        <Move className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">{isRepositionMode ? 'Done' : 'Reorder'}</span>
-                    </button>
+                <div className="text-xs sm:text-sm text-gray-500">
+                    {format(dates[0], 'MMM d')} - {format(dates[dates.length - 1], 'MMM d, yyyy')}
                 </div>
             </div>
 
             <div className="overflow-x-auto">
                 <div className="min-w-max">
                     {/* Grid Header */}
-                    <div className="grid grid-cols-[100px_1fr_60px] sm:grid-cols-[160px_1fr_80px] md:grid-cols-[200px_1fr_100px] border-b border-gray-100 dark:border-gray-700">
+                    <div className="grid grid-cols-[120px_1fr_60px] sm:grid-cols-[160px_1fr_80px] md:grid-cols-[200px_1fr_100px] border-b border-gray-100 dark:border-gray-700">
                         <div className="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             Habit
                         </div>
@@ -335,6 +328,9 @@ export default function HabitGridView() {
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
+                        onDragStart={() => {
+                            if (navigator.vibrate) navigator.vibrate(50);
+                        }}
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext items={habits.map(h => h.id)} strategy={verticalListSortingStrategy}>
@@ -347,7 +343,6 @@ export default function HabitGridView() {
                                         DAYS_TO_SHOW={DAYS_TO_SHOW}
                                         handleCellClick={handleCellClick}
                                         onContextMenu={handleContextMenu}
-                                        isRepositionMode={isRepositionMode}
                                     />
                                 ))}
                             </div>
@@ -384,6 +379,17 @@ export default function HabitGridView() {
                     <div className="h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
 
                     <button
+                        onClick={() => {
+                            setEditingHabit(contextMenu.habit);
+                            setContextMenu(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                        <Pencil className="w-4 h-4" />
+                        Edit Habit
+                    </button>
+
+                    <button
                         onClick={handleDeleteHabit}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                     >
@@ -392,6 +398,15 @@ export default function HabitGridView() {
                     </button>
 
                 </div>
+            )}
+
+            {/* Edit Habit Form */}
+            {editingHabit && (
+                <HabitEditForm
+                    habit={editingHabit}
+                    onClose={() => setEditingHabit(null)}
+                    onSubmit={handleEditHabit}
+                />
             )}
         </div >
     );

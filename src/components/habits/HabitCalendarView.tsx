@@ -3,8 +3,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit } from '../../services/habitService';
 import type { Habit } from '../../types';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isToday, addMonths, subMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Ban, Trash2, MoreVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Ban, Trash2, MoreVertical, Pencil } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import HabitEditForm from '../../components/HabitEditForm';
 import {
     DndContext,
     closestCenter,
@@ -51,37 +52,35 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
                 "bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm relative group",
                 isDragging && "ring-2 ring-blue-500 shadow-xl"
             )}
-            onContextMenu={(e) => onContextMenu(e, habit)}
-            {...attributes}
-            {...listeners} // Whole card draggable
-            style={{ ...style, touchAction: 'manipulation' }}
+            style={style}
         >
-            {/* More Button */}
-            <div className="absolute top-4 right-4 z-10">
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onContextMenu(e, habit);
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    className="p-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-gray-700 transition-all text-gray-400 dark:text-gray-500"
-                >
-                    <MoreVertical className="w-4 h-4" />
-                </button>
-            </div>
-
-            <div className={`p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between ${habit.isQuitting ? 'bg-red-50 dark:bg-red-900/10' : ''
-                }`}>
+            {/* Draggable Header */}
+            <div
+                className={`p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between cursor-grab active:cursor-grabbing ${habit.isQuitting ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
+                {...attributes}
+                {...listeners}
+            >
                 <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     {habit.isQuitting && <Ban className="w-4 h-4 text-red-500" />}
                     {habit.name}
                 </h3>
-                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <div className="flex items-center gap-2">
                     {habit.habitType === 'count' && (
-                        <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                        <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full text-xs text-gray-500 dark:text-gray-400">
                             {habit.isQuitting ? 'Limit' : 'Goal'}: {habit.dailyGoal}
                         </span>
                     )}
+                    {/* More Button - always visible */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onContextMenu(e, habit);
+                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        className="p-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all text-gray-500 dark:text-gray-400"
+                    >
+                        <MoreVertical className="w-4 h-4" />
+                    </button>
                 </div>
             </div>
 
@@ -183,6 +182,9 @@ export default function HabitCalendarView() {
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, habit: Habit } | null>(null);
 
+    // Edit Form State
+    const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
         useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
@@ -251,6 +253,12 @@ export default function HabitCalendarView() {
         if (!user || !contextMenu || !window.confirm('Are you sure you want to delete this habit?')) return;
         await deleteHabit(user.uid, contextMenu.habit.id);
         setContextMenu(null);
+    };
+
+    const handleEditHabit = async (updates: { name: string; reminderTime?: string }) => {
+        if (!user || !editingHabit) return;
+        await updateHabit(user.uid, editingHabit.id, updates);
+        setEditingHabit(null);
     };
 
     const colors = [
@@ -435,6 +443,9 @@ export default function HabitCalendarView() {
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
+                    onDragStart={() => {
+                        if (navigator.vibrate) navigator.vibrate(50);
+                    }}
                     onDragEnd={handleDragEnd}
                 >
                     <SortableContext items={habits.map(h => h.id)} strategy={rectSortingStrategy}>
@@ -482,6 +493,17 @@ export default function HabitCalendarView() {
                     <div className="h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
 
                     <button
+                        onClick={() => {
+                            setEditingHabit(contextMenu.habit);
+                            setContextMenu(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                        <Pencil className="w-4 h-4" />
+                        Edit Habit
+                    </button>
+
+                    <button
                         onClick={handleDeleteHabit}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                     >
@@ -490,6 +512,15 @@ export default function HabitCalendarView() {
                     </button>
 
                 </div>
+            )}
+
+            {/* Edit Habit Form */}
+            {editingHabit && (
+                <HabitEditForm
+                    habit={editingHabit}
+                    onClose={() => setEditingHabit(null)}
+                    onSubmit={handleEditHabit}
+                />
             )}
         </div>
     );
