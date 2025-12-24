@@ -56,7 +56,8 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
         >
             {/* Draggable Header */}
             <div
-                className={`p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between cursor-grab active:cursor-grabbing ${habit.isQuitting ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
+                className={`p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between cursor-grab active:cursor-grabbing select-none ${habit.isQuitting ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
+                style={{ touchAction: 'none' }}
                 {...attributes}
                 {...listeners}
             >

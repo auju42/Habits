@@ -59,7 +59,8 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
         >
             {/* Habit Name & Context Menu - Draggable Area */}
             <div
-                className="p-2 sm:p-3 md:p-4 flex items-center gap-1 sm:gap-2 border-r border-transparent border-b border-gray-50 dark:border-gray-800 cursor-grab active:cursor-grabbing"
+                className="p-2 sm:p-3 md:p-4 flex items-center gap-1 sm:gap-2 border-r border-transparent border-b border-gray-50 dark:border-gray-800 cursor-grab active:cursor-grabbing select-none"
+                style={{ touchAction: 'none' }}
                 {...attributes}
                 {...listeners}
             >

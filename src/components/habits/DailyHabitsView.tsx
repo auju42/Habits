@@ -54,7 +54,7 @@ function SortableHabitItem({ habit, onToggle, onIncrement, onDecrement, onContex
                 onIncrement={onIncrement}
                 onDecrement={onDecrement}
                 onContextMenu={onContextMenu}
-                dragHandleProps={{ ...attributes, ...listeners }}
+                dragHandleProps={{ ...attributes, ...listeners, style: { touchAction: 'none' } }}
             />
         </div>
     );

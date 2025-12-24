@@ -48,11 +48,12 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
             className={cn(
                 "rounded-xl p-3 sm:p-4 shadow-sm border transition-all hover:shadow-md group relative bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
             )}
+            {...dragHandleProps}
             style={{
                 borderLeftWidth: '4px',
                 borderLeftColor: habitColor,
+                ...dragHandleProps?.style,
             }}
-            {...dragHandleProps}
         >
             {/* Context Menu Trigger - Top Right Corner */}
             <button
@@ -67,10 +68,10 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
             </button>
 
             <div className="flex items-center justify-between pr-6">
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 select-none">
                     <div className="flex items-center gap-1.5 sm:gap-2">
                         {isQuitting && <Ban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />}
-                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate select-none">
                             {habit.name}
                         </h3>
                         {habit.habitType === 'count' && (
