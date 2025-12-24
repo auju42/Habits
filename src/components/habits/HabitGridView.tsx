@@ -126,7 +126,7 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                         >
                             <div
                                 className={cn(
-                                    "w-full h-full transition-all duration-300 transform flex items-center justify-center",
+                                    "w-full h-full transition-all duration-300 transform flex items-center justify-center relative",
                                     opacity > 0 ? "scale-90 rounded-md" : "hover:bg-gray-100 dark:hover:bg-gray-700/50 scale-50 rounded-full"
                                 )}
                                 style={opacity > 0 ? cellStyle : undefined}
@@ -134,7 +134,8 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                                 {/* Count indicator */}
                                 {habit.habitType === 'count' && countProgress > 0 && (
                                     <span className={cn(
-                                        "text-[9px] sm:text-[10px] font-bold",
+                                        "font-bold absolute bottom-0.5 right-1",
+                                        "text-[8px]",
                                         opacity > 0 ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" : "text-gray-500 dark:text-gray-400"
                                     )}>
                                         {countProgress}

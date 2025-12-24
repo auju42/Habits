@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { format, endOfMonth, subMonths, addMonths, subDays, addDays } from 'date-fns';
-import { Lock, ChevronLeft, ChevronRight, CalendarPlus, CheckCircle2 } from 'lucide-react';
+import { format, endOfMonth, subMonths, addMonths } from 'date-fns';
+import { Lock, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
 import type { QuranProgress } from '../../types/quran';
 import { saveHizbReviewsForDate } from '../../services/quranService';
 import { getJuzPageRange } from '../../types/quran';
@@ -19,20 +19,7 @@ export default function QuranReviewView({ userId, progress }: Props) {
     const [viewMode, setViewMode] = useState<'month' | 'quarter'>('month');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Check if any reviews exist for a specific date
-    const hasReviewsForDate = (date: Date): boolean => {
-        const dateStr = format(date, 'yyyy-MM-dd');
-        const hizbReviews = progress?.hizbReviews || {};
-        for (let h = 1; h <= 60; h++) {
-            if (hizbReviews[h]?.includes(dateStr)) return true;
-        }
-        // Also check legacy juzReviews
-        const juzReviews = progress?.juzReviews || {};
-        for (let j = 1; j <= 30; j++) {
-            if (juzReviews[j]?.includes(dateStr)) return true;
-        }
-        return false;
-    };
+
 
     const handleSaveReviews = async (hizbNumbers: number[], date: string) => {
         await saveHizbReviewsForDate(userId, hizbNumbers, date, progress);
@@ -71,43 +58,14 @@ export default function QuranReviewView({ userId, progress }: Props) {
         else setSelectedMonth(addMonths(selectedMonth, 3));
     };
 
-    const handlePrevDay = () => setSelectedDate(subDays(selectedDate, 1));
-    const handleNextDay = () => {
-        const tomorrow = addDays(selectedDate, 1);
-        if (tomorrow <= new Date()) setSelectedDate(tomorrow);
-    };
 
-    const selectedDateHasReviews = hasReviewsForDate(selectedDate);
 
     return (
         <div className="space-y-6">
             {/* Date Selector with Enter Reviews Button */}
             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    {/* Date Navigation */}
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handlePrevDay}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                        >
-                            <ChevronLeft size={18} />
-                        </button>
-                        <div className="flex items-center gap-2 min-w-[140px] sm:min-w-[180px] justify-center">
-                            <span className="text-sm sm:text-base font-medium text-gray-800 dark:text-white">
-                                {format(selectedDate, 'EEE, MMM d, yyyy')}
-                            </span>
-                            {selectedDateHasReviews && (
-                                <CheckCircle2 size={16} className="text-green-500" />
-                            )}
-                        </div>
-                        <button
-                            onClick={handleNextDay}
-                            disabled={addDays(selectedDate, 1) > new Date()}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <ChevronRight size={18} />
-                        </button>
-                    </div>
+
 
                     {/* Enter Reviews Button */}
                     <button

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { registerForPushNotifications } from '../services/notificationService';
+
 
 export interface EnabledModules {
     habits: boolean;
@@ -55,12 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const setupComplete = localStorage.getItem(`setup_complete_${currentUser.uid} `);
                 setHasCompletedSetup(setupComplete === 'true');
 
-                // Register for push notifications
-                try {
-                    await registerForPushNotifications(currentUser.uid);
-                } catch (error) {
-                    console.warn('Failed to register for push notifications:', error);
-                }
+
             } else {
                 setEnabledModules(DEFAULT_MODULES);
                 setHasCompletedSetup(false);

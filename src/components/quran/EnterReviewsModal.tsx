@@ -111,13 +111,12 @@ export default function EnterReviewsModal({ isOpen, onClose, progress, selectedD
                         </div>
                     </div>
 
-                    {/* Date Navigation */}
                     <div className="px-4 pb-4 flex items-center justify-between">
                         <button
                             onClick={handlePrevDay}
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
                         >
-                            <ChevronLeft size={20} className="text-gray-500" />
+                            <ChevronLeft size={20} className="text-blue-600 dark:text-blue-400" />
                         </button>
                         <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {format(selectedDate, 'EEEE, MMMM d, yyyy')}
@@ -127,7 +126,7 @@ export default function EnterReviewsModal({ isOpen, onClose, progress, selectedD
                             disabled={addDays(selectedDate, 1) > new Date()}
                             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-30"
                         >
-                            <ChevronRight size={20} className="text-gray-500" />
+                            <ChevronRight size={20} className="text-blue-600 dark:text-blue-400" />
                         </button>
                     </div>
                 </div>
