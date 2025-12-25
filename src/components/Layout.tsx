@@ -4,6 +4,7 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ModuleSetupModal from './ModuleSetupModal';
 import { Toaster } from 'sonner';
+import MobileBottomNav from './MobileBottomNav';
 
 export default function Layout() {
     const { enabledModules, hasCompletedSetup } = useAuth();
@@ -32,18 +33,17 @@ export default function Layout() {
         return <Navigate to={getDefaultRoute()} replace />;
     }
 
-
-
     const handleSetupComplete = () => {
         setShowSetupModal(false);
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200 pt-[env(safe-area-inset-top)]">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200 pt-[env(safe-area-inset-top)] pb-20 sm:pb-0">
             <Navbar />
             <main>
                 <Outlet />
             </main>
+            <MobileBottomNav />
 
             {/* First-time setup modal */}
             <ModuleSetupModal
