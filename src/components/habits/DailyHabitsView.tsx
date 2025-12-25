@@ -15,16 +15,19 @@ import {
     TouchSensor,
     useSensor,
     useSensors,
-    type DragEndEvent
+    DragOverlay,
+    type DragEndEvent,
+    type DragStartEvent
 } from '@dnd-kit/core';
 import {
     arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
+    rectSortingStrategy,
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { restrictToParentElement, restrictToWindowEdges } from '@dnd-kit/modifiers';
 
 // Sortable Wrapper Component
 function SortableHabitItem({ habit, onToggle, onIncrement, onDecrement, onContextMenu }: any) {
@@ -71,6 +74,10 @@ export default function DailyHabitsView() {
 
     // Edit Form State
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+
+    // Active Drag State for DragOverlay
+    const [activeDragId, setActiveDragId] = useState<string | null>(null);
+    const activeDragHabit = activeDragId ? habits.find(h => h.id === activeDragId) : null;
 
 
     const sensors = useSensors(
@@ -133,7 +140,13 @@ export default function DailyHabitsView() {
         setContextMenu(null);
     };
 
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveDragId(event.active.id as string);
+        if (navigator.vibrate) navigator.vibrate(50);
+    };
+
     const handleDragEnd = async (event: DragEndEvent) => {
+        setActiveDragId(null);
         const { active, over } = event;
         if (!over || active.id === over.id || !user) return;
 
@@ -285,12 +298,11 @@ export default function DailyHabitsView() {
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
-                        onDragStart={() => {
-                            if (navigator.vibrate) navigator.vibrate(50);
-                        }}
+                        modifiers={[restrictToParentElement, restrictToWindowEdges]}
+                        onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                     >
-                        <SortableContext items={habits.map(h => h.id)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={habits.map(h => h.id)} strategy={rectSortingStrategy}>
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                                 {habits.map((habit) => (
                                     <SortableHabitItem
@@ -304,6 +316,21 @@ export default function DailyHabitsView() {
                                 ))}
                             </div>
                         </SortableContext>
+
+                        {/* Drag Overlay - Visual preview of dragged item */}
+                        <DragOverlay>
+                            {activeDragHabit ? (
+                                <div className="opacity-90 shadow-2xl scale-105 rotate-2">
+                                    <HabitCard
+                                        habit={activeDragHabit}
+                                        onToggle={() => { }}
+                                        onIncrement={() => { }}
+                                        onDecrement={() => { }}
+                                        onContextMenu={() => { }}
+                                    />
+                                </div>
+                            ) : null}
+                        </DragOverlay>
                     </DndContext>
                 )}
             </div>

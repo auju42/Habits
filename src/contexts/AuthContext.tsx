@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, type User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, type User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { Capacitor } from '@capacitor/core';
 
 
 export interface EnabledModules {
@@ -36,7 +37,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [enabledModules, setEnabledModules] = useState<EnabledModules>(DEFAULT_MODULES);
     const [hasCompletedSetup, setHasCompletedSetup] = useState(false);
 
+    // Check if running on native platform (Capacitor)
+    const isNative = Capacitor.isNativePlatform();
+
     useEffect(() => {
+        // Handle redirect result for native platforms
+        const handleRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    const credential = GoogleAuthProvider.credentialFromResult(result);
+                    if (credential?.accessToken) {
+                        setAccessToken(credential.accessToken);
+                        localStorage.setItem('google_access_token', credential.accessToken);
+                    }
+                }
+            } catch (error) {
+                console.error("Error handling redirect result:", error);
+            }
+        };
+
+        handleRedirectResult();
+
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
 
@@ -70,13 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signInWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
-        // provider.addScope('https://www.googleapis.com/auth/calendar.events'); // Removed to avoid verification warning
         try {
-            const result = await signInWithPopup(auth, provider);
-            const credential = GoogleAuthProvider.credentialFromResult(result);
-            if (credential?.accessToken) {
-                setAccessToken(credential.accessToken);
-                localStorage.setItem('google_access_token', credential.accessToken);
+            if (isNative) {
+                // Use redirect on native platforms (Capacitor WebView)
+                await signInWithRedirect(auth, provider);
+            } else {
+                // Use popup on web
+                const result = await signInWithPopup(auth, provider);
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                if (credential?.accessToken) {
+                    setAccessToken(credential.accessToken);
+                    localStorage.setItem('google_access_token', credential.accessToken);
+                }
             }
         } catch (error) {
             console.error("Error signing in with Google", error);

@@ -91,8 +91,8 @@ export default function QuranReviewView({ userId, progress }: Props) {
                     <button
                         onClick={() => setViewMode('month')}
                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'month'
-                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                             }`}
                     >
                         Monthly
@@ -100,8 +100,8 @@ export default function QuranReviewView({ userId, progress }: Props) {
                     <button
                         onClick={() => setViewMode('quarter')}
                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'quarter'
-                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                             }`}
                     >
                         Quarterly
@@ -191,14 +191,14 @@ export default function QuranReviewView({ userId, progress }: Props) {
                                 )}
                             </div>
 
-                            {/* Larger Dot Calendar */}
-                            <div className="hidden sm:flex flex-col gap-1.5">
+                            {/* Dot Calendar - responsive sizes */}
+                            <div className="flex flex-col gap-1 sm:gap-1.5">
                                 {dotRows.map((rowDots, rowIdx) => (
-                                    <div key={rowIdx} className="flex gap-1 flex-wrap">
+                                    <div key={rowIdx} className="flex gap-0.5 sm:gap-1 flex-wrap">
                                         {rowDots.map((d, idx) => (
                                             <div
                                                 key={idx}
-                                                className="w-3 h-3 rounded-full relative overflow-hidden bg-gray-100 dark:bg-gray-700"
+                                                className="w-2 h-2 sm:w-3 sm:h-3 rounded-full relative overflow-hidden bg-gray-100 dark:bg-gray-700"
                                                 title={`${format(d.date, 'MMM d')}: ${d.intensity === 2 ? 'Full' : d.intensity === 1 ? 'Half' : 'None'}`}
                                             >
                                                 {d.intensity > 0 && (

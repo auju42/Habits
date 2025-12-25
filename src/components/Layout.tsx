@@ -39,7 +39,7 @@ export default function Layout() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200 pt-[env(safe-area-inset-top)]">
             <Navbar />
             <main>
                 <Outlet />
