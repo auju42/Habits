@@ -15,6 +15,14 @@ import { differenceInDays, parseISO, format } from 'date-fns';
 
 const COLLECTION_NAME = 'habits';
 
+export const getHabit = async (userId: string, habitId: string): Promise<Habit | null> => {
+    const { getDoc } = await import('firebase/firestore');
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/${habitId}`);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() } as Habit;
+};
+
 export const subscribeToHabits = (userId: string, callback: (habits: Habit[]) => void) => {
     const q = query(
         collection(db, `users/${userId}/${COLLECTION_NAME}`),
@@ -59,7 +67,7 @@ export const addHabit = async (
     color?: string,
     reminderTime?: string
 ) => {
-    await addDoc(collection(db, `users/${userId}/${COLLECTION_NAME}`), {
+    const docRef = await addDoc(collection(db, `users/${userId}/${COLLECTION_NAME}`), {
         userId,
         name,
         completedDates: [],
@@ -73,6 +81,7 @@ export const addHabit = async (
         order: Date.now(), // Use timestamp as simple default order to put new ones at bottom
         reminderTime: reminderTime || null,
     });
+    return docRef.id;
 };
 
 export const deleteHabit = async (userId: string, habitId: string) => {

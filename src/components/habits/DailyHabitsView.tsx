@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Flame, CheckCircle, Target, Trash2, Pencil } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { subscribeToHabits, addHabit, toggleHabitCompletion, deleteHabit, incrementHabitProgress, decrementHabitProgress, reorderHabits, updateHabit } from '../../services/habitService';
+import { scheduleHabitReminder, cancelHabitReminder } from '../../services/notificationService';
 import type { Habit } from '../../types';
 import HabitCard from '../../components/HabitCard';
 import HabitForm from '../../components/HabitForm';
@@ -89,7 +90,7 @@ export default function DailyHabitsView() {
         useSensor(TouchSensor, {
             // Touch sensor with delay for "Hold to Drag"
             activationConstraint: {
-                delay: 250,
+                delay: 500,
                 tolerance: 5,
             },
         }),
@@ -116,7 +117,12 @@ export default function DailyHabitsView() {
 
     const handleAddHabit = async (name: string, habitType: 'simple' | 'count', dailyGoal?: number, isQuitting?: boolean, color?: string, reminderTime?: string) => {
         if (!user) return;
-        await addHabit(user.uid, name, habitType, dailyGoal, isQuitting, color, reminderTime);
+        const habitId = await addHabit(user.uid, name, habitType, dailyGoal, isQuitting, color, reminderTime);
+
+        if (reminderTime) {
+            const [hours, minutes] = reminderTime.split(':').map(Number);
+            await scheduleHabitReminder(habitId, name, hours, minutes);
+        }
     };
 
     const handleToggleHabit = async (habit: Habit, date: string) => {
@@ -136,6 +142,8 @@ export default function DailyHabitsView() {
 
     const handleDeleteHabit = async () => {
         if (!user || !contextMenu || !window.confirm('Are you sure you want to delete this habit?')) return;
+
+        await cancelHabitReminder(contextMenu.habit.id);
         await deleteHabit(user.uid, contextMenu.habit.id);
         setContextMenu(null);
     };
@@ -179,6 +187,14 @@ export default function DailyHabitsView() {
     const handleEditHabit = async (updates: { name: string; reminderTime?: string }) => {
         if (!user || !editingHabit) return;
         await updateHabit(user.uid, editingHabit.id, updates);
+
+        if (updates.reminderTime) {
+            const [hours, minutes] = updates.reminderTime.split(':').map(Number);
+            await scheduleHabitReminder(editingHabit.id, updates.name, hours, minutes);
+        } else if (updates.reminderTime === '') {
+            await cancelHabitReminder(editingHabit.id);
+        }
+
         setEditingHabit(null);
     };
 
@@ -303,7 +319,7 @@ export default function DailyHabitsView() {
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext items={habits.map(h => h.id)} strategy={rectSortingStrategy}>
-                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 {habits.map((habit) => (
                                     <SortableHabitItem
                                         key={habit.id}

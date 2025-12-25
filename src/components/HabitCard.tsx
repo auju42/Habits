@@ -46,7 +46,7 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
     return (
         <div
             className={cn(
-                "rounded-xl p-3 sm:p-4 shadow-sm border transition-all hover:shadow-md group relative bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                "rounded-xl p-2.5 sm:p-3 shadow-sm border transition-all hover:shadow-md group relative bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
             )}
             {...dragHandleProps}
             style={{
@@ -62,34 +62,34 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
                     onContextMenu?.(e, habit);
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors z-10"
+                className="absolute top-1.5 right-1.5 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors z-10"
             >
-                <MoreVertical className="w-4 h-4" />
+                <MoreVertical className="w-3.5 h-3.5" />
             </button>
 
-            <div className="flex items-center justify-between pr-6">
+            <div className="flex items-center justify-between pr-5">
                 <div className="flex-1 min-w-0 select-none">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                        {isQuitting && <Ban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />}
+                    <div className="flex items-center gap-1.5">
+                        {isQuitting && <Ban className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />}
                         <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate select-none">
                             {habit.name}
                         </h3>
                         {habit.habitType === 'count' && (
-                            <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                                 {currentProgress}/{dailyGoal}
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 gap-2 sm:gap-3 mt-1">
+                    <div className="flex items-center text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 gap-2 sm:gap-3 mt-0.5">
                         <div className={cn("flex items-center gap-1", habit.streak > 0 && "text-orange-500 font-medium")}>
-                            <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             <span>{habit.streak}d</span>
                         </div>
                     </div>
 
                     {/* Progress bar for count habits */}
                     {habit.habitType === 'count' && (
-                        <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 sm:h-1.5 overflow-hidden">
+                        <div className="mt-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
                             <div
                                 className="h-full rounded-full transition-all duration-300"
                                 style={{
@@ -101,27 +101,27 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
                     )}
                 </div>
 
-                <div className="flex items-center gap-1 sm:gap-1.5 ml-2 sm:ml-3">
+                <div className="flex items-center gap-1 sm:gap-1.5 ml-2">
                     {habit.habitType === 'count' ? (
                         <>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onDecrement?.(habit, todayStr); }}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 disabled={currentProgress <= 0}
-                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                             >
-                                <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                <Minus className="w-3 h-3" />
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onIncrement?.(habit, todayStr); }}
                                 onPointerDown={(e) => e.stopPropagation()}
-                                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 text-white shadow-lg"
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 text-white shadow-lg"
                                 style={{
                                     backgroundColor: habitColor,
                                     boxShadow: `0 4px 6px -1px ${habitColor}40`
                                 }}
                             >
-                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </button>
                         </>
                     ) : (
@@ -129,7 +129,7 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
                             onClick={(e) => { e.stopPropagation(); onToggle(habit, todayStr); }}
                             onPointerDown={(e) => e.stopPropagation()}
                             className={cn(
-                                "w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-200",
+                                "w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200",
                                 !showAsCompleted && "bg-gray-100 dark:bg-gray-700 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
                             )}
                             style={showAsCompleted ? {
@@ -139,9 +139,9 @@ export default function HabitCard({ habit, onToggle, onIncrement, onDecrement, o
                             } : {}}
                         >
                             {isQuitting ? (
-                                showAsCompleted ? <Shield className="w-4 h-4 sm:w-5 sm:h-5" /> : <Ban className="w-4 h-4 sm:w-5 sm:h-5" />
+                                showAsCompleted ? <Shield className="w-4 h-4" /> : <Ban className="w-4 h-4" />
                             ) : (
-                                <Check className="w-5 h-5 sm:w-6 sm:h-6" />
+                                <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                             )}
                         </button>
                     )}

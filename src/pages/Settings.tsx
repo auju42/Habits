@@ -1,4 +1,4 @@
-import { CheckSquare, ListTodo, BookOpen, LogOut, ArrowLeft } from 'lucide-react';
+import { CheckSquare, BookOpen, LogOut, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth, type EnabledModules } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,7 @@ const MODULES = [
         color: 'emerald',
         description: 'Build positive routines by tracking daily habits with streaks and calendar view.',
     },
+    /*
     {
         key: 'tasks' as keyof EnabledModules,
         name: 'Tasks',
@@ -18,6 +19,7 @@ const MODULES = [
         color: 'blue',
         description: 'Manage your to-do list with priorities, due dates, and Google Calendar sync.',
     },
+    */
     {
         key: 'quran' as keyof EnabledModules,
         name: 'Quran Hifz',

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckSquare, ListTodo, BookOpen, ArrowRight } from 'lucide-react';
+import { CheckSquare, BookOpen, ArrowRight } from 'lucide-react';
 import { useAuth, type EnabledModules } from '../contexts/AuthContext';
 
 interface Props {
@@ -21,6 +21,7 @@ const MODULES: Array<{
             color: 'emerald',
             description: 'Build positive routines by tracking daily habits. See your streaks grow and visualize progress on a calendar.',
         },
+        /*
         {
             key: 'tasks',
             name: 'Tasks',
@@ -28,6 +29,7 @@ const MODULES: Array<{
             color: 'blue',
             description: 'Manage your to-do list with priorities, due dates, and Google Calendar integration.',
         },
+        */
         {
             key: 'quran',
             name: 'Quran Hifz',

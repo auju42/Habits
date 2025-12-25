@@ -9,37 +9,19 @@ import HabitsPage from './pages/HabitsPage';
 import Tasks from './pages/Tasks';
 import QuranTracker from './pages/QuranTracker';
 import Settings from './pages/Settings';
-import { initializePushNotifications, setupNotificationListeners } from './services/notificationService';
+import { initializePushNotifications } from './services/notificationService';
+import NotificationHandler from './components/NotificationHandler';
 
 function App() {
-  // Initialize notifications on app start
+  // Initialize push notification registration on app start
   useEffect(() => {
-    const initNotifications = async () => {
-      const token = await initializePushNotifications();
-      if (token) {
-        console.log('FCM Token:', token);
-        // Token can be stored in Firestore for server-side push notifications later
-      }
-
-      // Set up tap handlers
-      setupNotificationListeners(
-        (habitId) => {
-          console.log('Habit reminder tapped:', habitId);
-          // Could navigate to habits page
-        },
-        (taskId) => {
-          console.log('Task reminder tapped:', taskId);
-          // Could navigate to tasks page
-        }
-      );
-    };
-
-    initNotifications();
+    initializePushNotifications();
   }, []);
 
   return (
     <Router>
       <AuthProvider>
+        <NotificationHandler />
         <ThemeProvider>
           <Routes>
             <Route path="/login" element={<Login />} />

@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, type User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, type User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 
 export interface EnabledModules {
@@ -26,7 +27,7 @@ interface AuthContextType {
     completeSetup: () => void;
 }
 
-const DEFAULT_MODULES: EnabledModules = { habits: true, tasks: true, quran: true };
+const DEFAULT_MODULES: EnabledModules = { habits: true, tasks: false, quran: true };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -41,23 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isNative = Capacitor.isNativePlatform();
 
     useEffect(() => {
-        // Handle redirect result for native platforms
-        const handleRedirectResult = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result) {
-                    const credential = GoogleAuthProvider.credentialFromResult(result);
-                    if (credential?.accessToken) {
-                        setAccessToken(credential.accessToken);
-                        localStorage.setItem('google_access_token', credential.accessToken);
-                    }
-                }
-            } catch (error) {
-                console.error("Error handling redirect result:", error);
-            }
-        };
-
-        handleRedirectResult();
+        // Initialize Native Google Auth
+        if (isNative) {
+            GoogleAuth.initialize({
+                clientId: '183255939378-g58pvmqmuujm7nhsu5ptrl5rl5oitc5f.apps.googleusercontent.com',
+                scopes: ['profile', 'email'],
+                grantOfflineAccess: true,
+            });
+        }
 
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
@@ -67,7 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const savedModules = localStorage.getItem(`modules_${currentUser.uid} `);
                 if (savedModules) {
                     try {
-                        setEnabledModules(JSON.parse(savedModules));
+                        const parsed = JSON.parse(savedModules);
+                        // Force disable tasks even if saved as true
+                        parsed.tasks = false;
+                        setEnabledModules(parsed);
                     } catch {
                         setEnabledModules(DEFAULT_MODULES);
                     }
@@ -91,13 +86,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const signInWithGoogle = async () => {
-        const provider = new GoogleAuthProvider();
         try {
             if (isNative) {
-                // Use redirect on native platforms (Capacitor WebView)
-                await signInWithRedirect(auth, provider);
+                // Native Google Sign In
+                const googleUser = await GoogleAuth.signIn();
+                const idToken = googleUser.authentication.idToken;
+                const credential = GoogleAuthProvider.credential(idToken);
+
+                await signInWithCredential(auth, credential);
+
+                // Store token if needed (though Firebase handles auth state)
+                if (idToken) {
+                    setAccessToken(idToken);
+                    localStorage.setItem('google_access_token', idToken);
+                }
             } else {
                 // Use popup on web
+                const provider = new GoogleAuthProvider();
                 const result = await signInWithPopup(auth, provider);
                 const credential = GoogleAuthProvider.credentialFromResult(result);
                 if (credential?.accessToken) {
@@ -105,8 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     localStorage.setItem('google_access_token', credential.accessToken);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error signing in with Google", error);
+            // Alert for easier debugging on physical device
+            alert("Sign-in error: " + (error.message || JSON.stringify(error)));
             throw error;
         }
     };

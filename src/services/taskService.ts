@@ -53,7 +53,7 @@ export const addTask = async (
         });
     }
 
-    await addDoc(collection(db, `users/${userId}/${COLLECTION_NAME}`), {
+    const docRef = await addDoc(collection(db, `users/${userId}/${COLLECTION_NAME}`), {
         userId,
         title,
         description: description || '',
@@ -67,6 +67,7 @@ export const addTask = async (
         recurrence,
         isRecurring: recurrence !== 'none',
     });
+    return docRef.id;
 };
 
 export const toggleTaskCompletion = async (

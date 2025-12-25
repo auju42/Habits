@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { subscribeToTasks, addTask, toggleTaskCompletion, deleteTask } from '../services/taskService';
+import { scheduleTaskReminder, cancelTaskReminder } from '../services/notificationService';
 import type { Task } from '../types';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
@@ -36,7 +38,23 @@ export default function Tasks() {
         itemType: 'task' | 'event' = 'task'
     ) => {
         if (!user) return;
-        await addTask(user.uid, title, priority, description, dueDate, dueTime, accessToken, recurrence, itemType);
+        const taskId = await addTask(user.uid, title, priority, description, dueDate, dueTime, accessToken, recurrence, itemType);
+
+        if (dueDate) {
+            try {
+                const { parseISO } = await import('date-fns');
+                const dateStr = dueTime ? `${dueDate}T${dueTime}` : `${dueDate}T09:00:00`;
+                const dateObj = parseISO(dateStr);
+
+                if (!isNaN(dateObj.getTime())) {
+                    await scheduleTaskReminder(taskId, title, dateObj);
+                } else {
+                    console.error('Invalid date generated:', dateStr);
+                }
+            } catch (error) {
+                console.error('Error scheduling task reminder:', error);
+            }
+        }
     };
 
     const handleToggleTask = async (task: Task) => {
@@ -46,6 +64,7 @@ export default function Tasks() {
 
     const handleDeleteTask = async (task: Task) => {
         if (!user || !window.confirm('Delete this task?')) return;
+        await cancelTaskReminder(task.id);
         await deleteTask(user.uid, task, accessToken);
     };
 
@@ -125,14 +144,24 @@ export default function Tasks() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {filteredTasks.map((task) => (
-                        <TaskCard
-                            key={task.id}
-                            task={task}
-                            onToggle={() => handleToggleTask(task)}
-                            onDelete={() => handleDeleteTask(task)}
-                        />
-                    ))}
+                    <AnimatePresence mode='popLayout'>
+                        {filteredTasks.map((task) => (
+                            <motion.div
+                                key={task.id}
+                                layout
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, x: -20, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <TaskCard
+                                    task={task}
+                                    onToggle={() => handleToggleTask(task)}
+                                    onDelete={() => handleDeleteTask(task)}
+                                />
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
                 </div>
             )}
 

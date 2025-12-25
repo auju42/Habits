@@ -27,6 +27,25 @@ export async function initializePushNotifications(): Promise<string | null> {
         // Register with FCM/APNs
         await PushNotifications.register();
 
+        // Register action types
+        await LocalNotifications.registerActionTypes({
+            types: [
+                {
+                    id: 'HABIT_REMINDER',
+                    actions: [
+                        { id: 'done', title: 'Mark as Done', foreground: true },
+                        { id: 'close', title: 'Close', foreground: false, destructive: true }
+                    ]
+                },
+                {
+                    id: 'TASK_REMINDER',
+                    actions: [
+                        { id: 'close', title: 'Close', foreground: false }
+                    ]
+                }
+            ]
+        });
+
         // Get the FCM token
         return new Promise((resolve) => {
             PushNotifications.addListener('registration', (token) => {
@@ -90,10 +109,12 @@ export async function scheduleHabitReminder(
                         at: scheduledTime,
                         repeats: true,
                         every: 'day',
+                        allowWhileIdle: true,
                     },
                     sound: 'default',
                     smallIcon: 'ic_stat_icon_config_sample',
                     actionTypeId: 'HABIT_REMINDER',
+                    autoCancel: true,
                     extra: { habitId },
                 },
             ],
@@ -129,13 +150,25 @@ export async function scheduleTaskReminder(
         await cancelTaskReminder(taskId);
 
         // Calculate when to send the reminder
-        const reminderTime = new Date(dueDate);
+        let reminderTime = new Date(dueDate);
+        const originalDueDate = new Date(dueDate);
         reminderTime.setHours(reminderTime.getHours() - hoursBeforeDue);
 
-        // Only schedule if reminder time is in the future
-        if (reminderTime <= new Date()) {
-            console.log('Task due date is too soon or in the past');
-            return;
+        const now = new Date();
+
+        // If reminder time is in the past but the actual task is still in the future,
+        // schedule for 10 seconds from now so the user gets notified immediately
+        let bodyText = `"${taskTitle}" is due in ${hoursBeforeDue} hour(s)`;
+
+        if (reminderTime <= now) {
+            if (originalDueDate > now) {
+                reminderTime = new Date(now.getTime() + 10000); // 10 seconds from now
+                bodyText = `"${taskTitle}" is due shortly!`;
+                console.log('Lead time already passed, scheduling immediate reminder');
+            } else {
+                console.log('Task due date is in the past, skipping notification');
+                return;
+            }
         }
 
         await LocalNotifications.schedule({
@@ -143,13 +176,15 @@ export async function scheduleTaskReminder(
                 {
                     id: hashCode(taskId),
                     title: '📋 Task Due Soon',
-                    body: `"${taskTitle}" is due in ${hoursBeforeDue} hour(s)`,
+                    body: bodyText,
                     schedule: {
                         at: reminderTime,
+                        allowWhileIdle: true,
                     },
                     sound: 'default',
                     smallIcon: 'ic_stat_icon_config_sample',
                     actionTypeId: 'TASK_REMINDER',
+                    autoCancel: true,
                     extra: { taskId },
                 },
             ],
@@ -195,7 +230,7 @@ export async function cancelTaskReminder(taskId: string): Promise<void> {
  * Set up notification listeners for handling taps
  */
 export function setupNotificationListeners(
-    onHabitReminderTap?: (habitId: string) => void,
+    onHabitReminderTap?: (habitId: string, isDone?: boolean) => void,
     onTaskReminderTap?: (taskId: string) => void
 ): void {
     if (!isNative) return;
@@ -213,9 +248,17 @@ export function setupNotificationListeners(
     // Handle local notification tap
     LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
         const extra = action.notification.extra;
+        const actionId = action.actionId;
+
+        // Automatically dismiss the notification on any action
+        LocalNotifications.cancel({ notifications: [{ id: action.notification.id }] });
+
+        if (actionId === 'close') {
+            return;
+        }
 
         if (action.notification.actionTypeId === 'HABIT_REMINDER' && extra?.habitId) {
-            onHabitReminderTap?.(extra.habitId);
+            onHabitReminderTap?.(extra.habitId, actionId === 'done');
         } else if (action.notification.actionTypeId === 'TASK_REMINDER' && extra?.taskId) {
             onTaskReminderTap?.(extra.taskId);
         }
