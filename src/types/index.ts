@@ -10,6 +10,7 @@ export interface Habit {
     userId: string;
     name: string;
     completedDates: string[]; // YYYY-MM-DD
+    skippedDates?: string[]; // YYYY-MM-DD - Days marked as skipped (maintain streak but don't increment)
     streak: number;
     createdAt: number; // Timestamp
     color?: string;

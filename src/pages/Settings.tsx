@@ -1,7 +1,10 @@
-import { CheckSquare, BookOpen, LogOut, ArrowLeft } from 'lucide-react';
+import { CheckSquare, BookOpen, LogOut, ArrowLeft, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth, type EnabledModules } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { subscribeToHabits } from '../services/habitService';
+import { exportHabitsToCSV } from '../utils/csvExport';
 
 const MODULES = [
     {
@@ -32,10 +35,24 @@ const MODULES = [
 export default function Settings() {
     const { user, enabledModules, setModuleEnabled, logout } = useAuth();
     const navigate = useNavigate();
+    const [exporting, setExporting] = useState(false);
 
     const handleLogout = async () => {
         await logout();
         navigate('/login');
+    };
+
+    const handleExport = () => {
+        if (!user) return;
+        setExporting(true);
+        // Subscribe once to get data then unsubscribe immediately
+        // Actually subscribeToHabits returns an unsub function, and calls callback with data.
+        const unsubscribe = subscribeToHabits(user.uid, (habits) => {
+            exportHabitsToCSV(habits);
+            toast.success('Export started');
+            setExporting(false);
+            unsubscribe(); // Stop listening after first fetch
+        });
     };
 
     const handleToggle = (key: keyof EnabledModules) => {
@@ -120,22 +137,43 @@ export default function Settings() {
                 </div>
             </div>
 
-            {/* Account Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="font-semibold text-gray-900 dark:text-white">Account</h2>
-                </div>
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Data Management</h2>
+            </div>
 
-                <div className="p-4">
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 w-full p-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition"
-                    >
-                        <LogOut size={20} />
-                        <span className="font-medium">Log Out</span>
-                    </button>
-                </div>
+            <div className="p-4">
+                <button
+                    onClick={handleExport}
+                    disabled={exporting}
+                    className="flex items-center gap-3 w-full p-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition"
+                >
+                    <div className="bg-blue-100 dark:bg-blue-900/30 w-10 h-10 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        <Download size={20} />
+                    </div>
+                    <div>
+                        <span className="font-medium block">Export Habits Data</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Download your habits history as CSV</span>
+                    </div>
+                </button>
             </div>
         </div>
+
+            {/* Account Section */ }
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold text-gray-900 dark:text-white">Account</h2>
+        </div>
+
+        <div className="p-4">
+            <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 w-full p-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition"
+            >
+                <LogOut size={20} />
+                <span className="font-medium">Log Out</span>
+            </button>
+        </div>
+    </div>
+        </div >
     );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit } from '../../services/habitService';
+import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit, toggleHabitSkipped } from '../../services/habitService';
 import type { Habit } from '../../types';
 import { format, subDays, addDays, isToday } from 'date-fns';
 import { ChevronLeft, ChevronRight, Flame, Trophy, MoreVertical, Trash2, Pencil } from 'lucide-react';
@@ -92,30 +92,85 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                 {dates.map((date: Date) => {
                     const dateStr = format(date, 'yyyy-MM-dd');
                     const isCompleted = habit.completedDates?.includes(dateStr);
+                    const isSkipped = habit.skippedDates?.includes(dateStr);
                     const countProgress = habit.dailyProgress?.[dateStr] || 0;
                     const dailyGoal = habit.dailyGoal || 1;
 
                     let opacity = 0;
+                    let style: React.CSSProperties = {};
 
-                    if (habit.habitType === 'simple') {
-                        if (isCompleted) opacity = 1;
+                    if (isSkipped) {
+                        // Skipped Visual
+                        opacity = 1;
+                        style = {
+                            background: `repeating-linear-gradient(45deg, transparent, transparent 5px, ${habitColor} 5px, ${habitColor} 6px)`,
+                            opacity: 0.5,
+                            border: `1px solid ${habitColor}`
+                        };
+                    } else if (habit.habitType === 'simple') {
+                        if (isCompleted) {
+                            // Heatmap Logic for Grid
+                            let tempStreak = 0;
+                            let checkDate = date;
+                            // Look back up to 30 days
+                            while (true) {
+                                const cStr = format(checkDate, 'yyyy-MM-dd');
+                                if (habit.completedDates?.includes(cStr)) {
+                                    tempStreak++;
+                                    checkDate = subDays(checkDate, 1);
+                                } else if (habit.skippedDates?.includes(cStr)) {
+                                    checkDate = subDays(checkDate, 1);
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            opacity = Math.max(0.2, Math.min(1, 0.4 + (tempStreak / 14) * 0.6));
+                        }
                     } else {
+                        // Count logic
                         if (habit.isQuitting) {
                             if (countProgress <= dailyGoal) opacity = 1;
                             else opacity = 0;
                         } else {
                             if (countProgress >= dailyGoal) {
-                                opacity = 1;
-                            } else {
-                                opacity = 0;
+                                // Full completion
+                                let tempStreak = 0;
+                                let checkDate = date;
+                                while (true) {
+                                    const cStr = format(checkDate, 'yyyy-MM-dd');
+                                    // Complex for count: need to check if goal met for that day.
+                                    // For now, simplify: if completedDates includes it, it's done.
+                                    if (habit.completedDates?.includes(cStr)) {
+                                        tempStreak++;
+                                        checkDate = subDays(checkDate, 1);
+                                    } else if (habit.skippedDates?.includes(cStr)) {
+                                        checkDate = subDays(checkDate, 1);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                opacity = Math.max(0.2, Math.min(1, 0.4 + (tempStreak / 14) * 0.6));
+                            } else if (countProgress > 0) {
+                                // Partial fill - no heatmap, just progress
+                                opacity = 0; // handled by custom style below
                             }
                         }
                     }
 
-                    let cellStyle: React.CSSProperties = {};
-                    if (opacity > 0) {
-                        cellStyle.backgroundColor = habitColor;
-                        cellStyle.opacity = Math.max(0.2, opacity);
+                    if (opacity > 0 && !isSkipped) {
+                        style.backgroundColor = habitColor;
+                        style.opacity = opacity;
+                    }
+
+                    // Partial fill for count habits
+                    if (habit.habitType === 'count' && !habit.isQuitting && !isSkipped && countProgress > 0 && countProgress < dailyGoal) {
+                        const percent = Math.min(100, Math.round((countProgress / dailyGoal) * 100));
+                        style = {
+                            background: `linear-gradient(to top, ${habitColor} ${percent}%, transparent ${percent}%)`
+                        };
+                        // Make sure we see the container
+                        opacity = 1;
                     }
 
                     return (
@@ -127,16 +182,16 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                             <div
                                 className={cn(
                                     "w-full h-full transition-all duration-300 transform flex items-center justify-center relative",
-                                    opacity > 0 ? "scale-90 rounded-md" : "hover:bg-gray-100 dark:hover:bg-gray-700/50 scale-50 rounded-full"
+                                    opacity > 0 ? (isSkipped ? "scale-90 rounded-md" : "scale-90 rounded-md") : "hover:bg-gray-100 dark:hover:bg-gray-700/50 scale-50 rounded-full"
                                 )}
-                                style={opacity > 0 ? cellStyle : undefined}
+                                style={opacity > 0 ? style : undefined}
                             >
                                 {/* Count indicator */}
                                 {habit.habitType === 'count' && countProgress > 0 && (
                                     <span className={cn(
                                         "font-bold absolute bottom-0.5 right-1",
                                         "text-[8px]",
-                                        opacity > 0 ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" : "text-gray-500 dark:text-gray-400"
+                                        opacity > 0 && !isSkipped ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" : "text-gray-500 dark:text-gray-400"
                                     )}>
                                         {countProgress}
                                     </span>
@@ -207,7 +262,20 @@ export default function HabitGridView() {
         if (!user) return;
         try {
             if (habit.habitType === 'simple') {
-                await toggleHabitCompletion(user.uid, habit, dateStr);
+                // 3-way toggle: Empty -> Done -> Skipped -> Empty
+                const isCompleted = habit.completedDates?.includes(dateStr);
+                const isSkipped = habit.skippedDates?.includes(dateStr);
+
+                if (isCompleted) {
+                    // Done -> Skipped
+                    await toggleHabitSkipped(user.uid, habit, dateStr);
+                } else if (isSkipped) {
+                    // Skipped -> Empty
+                    await toggleHabitSkipped(user.uid, habit, dateStr); // unskip
+                } else {
+                    // Empty -> Done
+                    await toggleHabitCompletion(user.uid, habit, dateStr);
+                }
             } else {
                 await incrementHabitProgress(user.uid, habit, dateStr);
             }

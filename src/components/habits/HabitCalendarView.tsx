@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit } from '../../services/habitService';
+import { subscribeToHabits, toggleHabitCompletion, incrementHabitProgress, reorderHabits, deleteHabit, updateHabit, toggleHabitSkipped } from '../../services/habitService';
 import type { Habit } from '../../types';
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isToday, addMonths, subMonths } from 'date-fns';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isToday, addMonths, subMonths, subDays } from 'date-fns';
 import { ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Ban, Trash2, MoreVertical, Pencil } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import HabitEditForm from '../../components/HabitEditForm';
@@ -98,33 +98,75 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
                         }
 
                         const isCompleted = habit.completedDates?.includes(dateStr);
+                        const isSkipped = habit.skippedDates?.includes(dateStr);
                         const countProgress = habit.dailyProgress?.[dateStr] || 0;
                         const dailyGoal = habit.dailyGoal || 1;
                         const habitColor = habit.color || '#3B82F6';
 
-                        let showAsComplete = false;
+                        // Heatmap Calculation
+                        // We filter dates <= current cell date to calculate what the streak was AT THAT TIME
+                        // This is a bit expensive but precise logic as requested
+                        let cellOpacity = 1;
+                        if (isCompleted) {
+                            const historicalCompleted = habit.completedDates?.filter((d: string) => d <= dateStr) || [];
+                            const historicalSkipped = habit.skippedDates?.filter((d: string) => d <= dateStr) || [];
+                            // We need a helper to calc streak from a specific end date.
+                            // Existing calculateStreak calculates from TODAY/YESTERDAY relative to the list.
+                            // We'll need to adapt it or just assume the simplified "consecutive count ending at dateStr"
+
+                            // Simplified in-line streak calc ending at this date:
+                            let tempStreak = 0;
+                            let checkDate = day;
+                            // Look back up to 30 days?
+                            // This simple loop is efficient enough for rendering
+                            while (true) {
+                                const cStr = format(checkDate, 'yyyy-MM-dd');
+                                if (habit.completedDates?.includes(cStr)) {
+                                    tempStreak++;
+                                    checkDate = subDays(checkDate, 1);
+                                } else if (habit.skippedDates?.includes(cStr)) {
+                                    // Skipped bridges but doesn't add
+                                    checkDate = subDays(checkDate, 1);
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            // Map streak to opacity: 1 day = 0.4, 7 days = 0.7, 30 days = 1.0
+                            if (habit.habitType === 'simple') {
+                                const intensity = Math.min(1, 0.4 + (tempStreak / 14) * 0.6);
+                                cellOpacity = intensity;
+                            }
+                        }
+
                         let style: React.CSSProperties = {};
                         let bgClass = "bg-gray-200 dark:bg-gray-700";
 
-                        if (habit.habitType === 'simple') {
-                            showAsComplete = isCompleted || false;
-                            if (showAsComplete) {
-                                style = { backgroundColor: habitColor };
-                                bgClass = ""; // remove default class if setting style
+                        if (isSkipped) {
+                            // Skipped Visual: Half filled / Diagonal line
+                            // Using linear gradient to create a diagonal line
+                            style = {
+                                background: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${habitColor} 10px, ${habitColor} 12px)`,
+                                opacity: 0.5,
+                                borderColor: habitColor,
+                                borderWidth: '1px'
+                            };
+                            bgClass = "";
+                        } else if (habit.habitType === 'simple') {
+                            if (isCompleted) {
+                                style = { backgroundColor: habitColor, opacity: cellOpacity };
+                                bgClass = "";
                             }
                         } else {
                             if (habit.isQuitting) {
-                                showAsComplete = countProgress <= dailyGoal;
+                                const showAsComplete = countProgress <= dailyGoal;
                                 if (showAsComplete) bgClass = "bg-green-500";
-                                else bgClass = "bg-red-500"; // Over limit
+                                else bgClass = "bg-red-500";
                             } else {
-                                // Progress bar logic
                                 const percent = Math.min(100, Math.round((countProgress / dailyGoal) * 100));
                                 if (percent >= 100) {
-                                    style = { backgroundColor: habitColor };
-                                    showAsComplete = true;
+                                    style = { backgroundColor: habitColor, opacity: cellOpacity };
                                 } else if (percent > 0) {
-                                    // Partial fill
                                     style = {
                                         background: `linear-gradient(to top, ${habitColor} ${percent}%, transparent ${percent}%)`
                                     };
@@ -143,7 +185,7 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
                                     isDayToday && "ring-2 ring-blue-500 ring-offset-1",
                                 )}
                                 style={style}
-                                title={`${format(day, 'MMM d')}: ${habit.habitType === 'count' ? `${countProgress}/${dailyGoal}` : (showAsComplete ? 'Done' : 'Not done')}`}
+                                title={`${format(day, 'MMM d')}: ${isSkipped ? 'Skipped' : (habit.habitType === 'count' ? `${countProgress}/${dailyGoal}` : (isCompleted ? 'Done' : 'Not done'))}`}
                             >
                                 <span className={cn(
                                     "absolute top-0.5 left-0.5 text-[8px] font-medium z-10 leading-none",
@@ -213,7 +255,20 @@ export default function HabitCalendarView() {
 
         try {
             if (habit.habitType === 'simple') {
-                await toggleHabitCompletion(user.uid, habit, dateStr);
+                // 3-way toggle: Empty -> Done -> Skipped -> Empty
+                const isCompleted = habit.completedDates?.includes(dateStr);
+                const isSkipped = habit.skippedDates?.includes(dateStr);
+
+                if (isCompleted) {
+                    // Done -> Skipped
+                    await toggleHabitSkipped(user.uid, habit, dateStr);
+                } else if (isSkipped) {
+                    // Skipped -> Empty
+                    await toggleHabitSkipped(user.uid, habit, dateStr); // unskip
+                } else {
+                    // Empty -> Done
+                    await toggleHabitCompletion(user.uid, habit, dateStr);
+                }
             } else {
                 await incrementHabitProgress(user.uid, habit, dateStr);
             }
@@ -385,33 +440,62 @@ export default function HabitCalendarView() {
                                         <div className="flex flex-wrap gap-0.5 justify-center content-center w-full h-full pt-1">
                                             {habits.map(habit => {
                                                 const isCompleted = habit.completedDates?.includes(dateStr);
+                                                const isSkipped = habit.skippedDates?.includes(dateStr);
                                                 const countProgress = habit.dailyProgress?.[dateStr] || 0;
                                                 const dailyGoal = habit.dailyGoal || 1;
                                                 const habitColor = habit.color || '#3B82F6';
 
-                                                let showAsComplete = false;
+                                                let opacity = 1;
                                                 let style: React.CSSProperties = {};
+                                                let bgClass = "";
 
-                                                if (habit.habitType === 'simple') {
-                                                    showAsComplete = isCompleted || false;
-                                                    if (showAsComplete) {
-                                                        style = { backgroundColor: habitColor };
+                                                if (isSkipped) {
+                                                    style = {
+                                                        background: `repeating-linear-gradient(45deg, transparent, transparent 2px, ${habitColor} 2px, ${habitColor} 3px)`,
+                                                        opacity: 0.6,
+                                                        border: `0.5px solid ${habitColor}`
+                                                    };
+                                                } else if (habit.habitType === 'simple') {
+                                                    if (isCompleted) {
+                                                        // Heatmap logic
+                                                        let tempStreak = 0;
+                                                        let checkDate = day;
+                                                        while (true) {
+                                                            const cStr = format(checkDate, 'yyyy-MM-dd');
+                                                            if (habit.completedDates?.includes(cStr)) {
+                                                                tempStreak++;
+                                                                checkDate = subDays(checkDate, 1);
+                                                            } else if (habit.skippedDates?.includes(cStr)) {
+                                                                checkDate = subDays(checkDate, 1);
+                                                            } else {
+                                                                break;
+                                                            }
+                                                        }
+                                                        opacity = Math.max(0.3, Math.min(1, 0.4 + (tempStreak / 14) * 0.6));
+                                                        style = { backgroundColor: habitColor, opacity };
+                                                    } else {
+                                                        bgClass = "bg-gray-300 dark:bg-gray-600";
                                                     }
                                                 } else {
-                                                    // Count habit logic
+                                                    // Count logic
                                                     if (habit.isQuitting) {
-                                                        showAsComplete = countProgress <= dailyGoal;
+                                                        if (countProgress <= dailyGoal) {
+                                                            bgClass = "bg-green-500";
+                                                        } else {
+                                                            // Over limit
+                                                            // Maybe show red?
+                                                            bgClass = "bg-red-500";
+                                                        }
                                                     } else {
-                                                        // For non-quitting count habits, show progress bar
-                                                        const percent = Math.min(100, Math.round((countProgress / dailyGoal) * 100));
-                                                        if (percent >= 100) {
+                                                        if (countProgress >= dailyGoal) {
                                                             style = { backgroundColor: habitColor };
-                                                            showAsComplete = true;
-                                                        } else if (percent > 0) {
-                                                            // Partial fill
-                                                            style = {
-                                                                background: `linear-gradient(to top, ${habitColor} ${percent}%, transparent ${percent}%)`
-                                                            };
+                                                            // Heatmap for count? Maybe overkill for small dots. 
+                                                            // Let's keep it simple for count habits in overview for now unless requested.
+                                                        } else if (countProgress > 0) {
+                                                            // Partial
+                                                            style = { backgroundColor: habitColor, opacity: 0.5 };
+                                                        } else {
+                                                            bgClass = "bg-gray-300 dark:bg-gray-600";
                                                         }
                                                     }
                                                 }
@@ -422,13 +506,10 @@ export default function HabitCalendarView() {
                                                         onClick={() => handleDayClick(habit, dateStr)}
                                                         className={cn(
                                                             "w-1.5 h-1.5 rounded-full transition-all border border-transparent hover:scale-150 cursor-pointer",
-                                                            habit.habitType === 'simple' || habit.isQuitting || (!showAsComplete && Object.keys(style).length === 0)
-                                                                ? (showAsComplete ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600")
-                                                                : "",
-                                                            Object.keys(style).length > 0 && "bg-gray-300 dark:bg-gray-600"
+                                                            bgClass
                                                         )}
                                                         style={style}
-                                                        title={`${habit.name}: ${habit.habitType === 'count' ? `${countProgress}/${dailyGoal}` : (showAsComplete ? 'Done' : 'Not done')}`}
+                                                        title={`${habit.name}: ${isSkipped ? 'Skipped' : (habit.habitType === 'count' ? `${countProgress}/${dailyGoal}` : (isCompleted ? 'Done' : 'Not done'))}`}
                                                     />
                                                 );
                                             })}
