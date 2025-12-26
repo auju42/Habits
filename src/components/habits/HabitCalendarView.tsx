@@ -108,12 +108,6 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
                         // This is a bit expensive but precise logic as requested
                         let cellOpacity = 1;
                         if (isCompleted) {
-                            const historicalCompleted = habit.completedDates?.filter((d: string) => d <= dateStr) || [];
-                            const historicalSkipped = habit.skippedDates?.filter((d: string) => d <= dateStr) || [];
-                            // We need a helper to calc streak from a specific end date.
-                            // Existing calculateStreak calculates from TODAY/YESTERDAY relative to the list.
-                            // We'll need to adapt it or just assume the simplified "consecutive count ending at dateStr"
-
                             // Simplified in-line streak calc ending at this date:
                             let tempStreak = 0;
                             let checkDate = day;
