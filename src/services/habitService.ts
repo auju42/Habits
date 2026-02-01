@@ -23,7 +23,7 @@ export const getHabit = async (userId: string, habitId: string): Promise<Habit |
     return { id: snap.id, ...snap.data() } as Habit;
 };
 
-export const subscribeToHabits = (userId: string, callback: (habits: Habit[]) => void) => {
+export const subscribeToHabits = (userId: string, callback: (habits: Habit[]) => void, onError?: (error: any) => void) => {
     const q = query(
         collection(db, `users/${userId}/${COLLECTION_NAME}`),
         orderBy('createdAt', 'desc')
@@ -55,6 +55,9 @@ export const subscribeToHabits = (userId: string, callback: (habits: Habit[]) =>
         });
 
         callback(sortedHabits);
+    }, (error) => {
+        console.error("Error subscribing to habits:", error);
+        if (onError) onError(error);
     });
 };
 

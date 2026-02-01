@@ -69,6 +69,7 @@ export default function DailyHabitsView() {
     const [habits, setHabits] = useState<Habit[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, habit: Habit } | null>(null);
@@ -101,10 +102,21 @@ export default function DailyHabitsView() {
 
     useEffect(() => {
         if (!user) return;
-        const unsubHabits = subscribeToHabits(user.uid, (data) => {
-            setHabits(data);
-            setLoading(false);
-        });
+        setLoading(true);
+        setError(null);
+
+        const unsubHabits = subscribeToHabits(
+            user.uid,
+            (data) => {
+                setHabits(data);
+                setLoading(false);
+            },
+            (err) => {
+                console.error("Habit subscription error:", err);
+                setError("Failed to load habits. Please check your connection or permissions.");
+                setLoading(false);
+            }
+        );
         return () => unsubHabits();
     }, [user]);
 
@@ -222,6 +234,23 @@ export default function DailyHabitsView() {
         return (
             <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex justify-center items-center h-64 px-4">
+                <div className="text-center text-red-500 dark:text-red-400 max-w-md">
+                    <p className="font-semibold text-lg mb-2">Something went wrong</p>
+                    <p className="text-sm opacity-90">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/20 rounded-lg text-sm font-medium hover:bg-red-200 dark:hover:bg-red-900/40 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
             </div>
         );
     }

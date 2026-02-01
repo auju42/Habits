@@ -125,7 +125,10 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                                 }
                             }
 
-                            opacity = Math.max(0.2, Math.min(1, 0.4 + (tempStreak / 14) * 0.6));
+                            // Quadratic curve for steeper gradient: 0.2 base.
+                            // Streak 1: ~0.21, Streak 5: ~0.4, Streak 9: ~0.85, Streak 10: 1.0
+                            const ratio = Math.min(tempStreak, 10) / 10;
+                            opacity = Math.max(0.2, Math.min(1, 0.2 + (ratio * ratio) * 0.8));
                         }
                     } else {
                         // Count logic
@@ -139,8 +142,6 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                                 let checkDate = date;
                                 while (true) {
                                     const cStr = format(checkDate, 'yyyy-MM-dd');
-                                    // Complex for count: need to check if goal met for that day.
-                                    // For now, simplify: if completedDates includes it, it's done.
                                     if (habit.completedDates?.includes(cStr)) {
                                         tempStreak++;
                                         checkDate = subDays(checkDate, 1);
@@ -150,7 +151,8 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                                         break;
                                     }
                                 }
-                                opacity = Math.max(0.2, Math.min(1, 0.4 + (tempStreak / 14) * 0.6));
+                                const ratio = Math.min(tempStreak, 10) / 10;
+                                opacity = Math.max(0.2, Math.min(1, 0.2 + (ratio * ratio) * 0.8));
                             } else if (countProgress > 0) {
                                 // Partial fill - no heatmap, just progress
                                 opacity = 0; // handled by custom style below
@@ -177,12 +179,14 @@ function SortableHabitRow({ habit, dates, DAYS_TO_SHOW, handleCellClick, onConte
                         <button
                             key={dateStr}
                             onClick={() => handleCellClick(habit, dateStr)}
-                            className="relative w-full h-full border-l border-dashed border-gray-100 dark:border-gray-700/50 first:border-l-0 flex items-center justify-center focus:outline-none"
+                            className="relative w-full h-full flex items-center justify-center focus:outline-none z-0"
                         >
                             <div
                                 className={cn(
-                                    "w-full h-full transition-all duration-300 transform flex items-center justify-center relative",
-                                    opacity > 0 ? (isSkipped ? "scale-90 rounded-md" : "scale-90 rounded-md") : "hover:bg-gray-100 dark:hover:bg-gray-700/50 scale-50 rounded-full"
+                                    "h-full transition-all duration-300 transform flex items-center justify-center relative",
+                                    // Use 105% width to definitely cover sub-pixel grid gaps
+                                    opacity > 0 ? "w-[105%] z-10" : "w-full z-0",
+                                    opacity > 0 ? (isSkipped ? "scale-100" : "scale-100") : "hover:bg-gray-100 dark:hover:bg-gray-700/50 scale-50 rounded-full"
                                 )}
                                 style={opacity > 0 ? style : undefined}
                             >
@@ -227,6 +231,7 @@ export default function HabitGridView() {
     const { user } = useAuth();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [endDate, setEndDate] = useState(new Date());
     const DAYS_TO_SHOW = 14;
 
@@ -244,10 +249,21 @@ export default function HabitGridView() {
 
     useEffect(() => {
         if (!user) return;
-        const unsubscribe = subscribeToHabits(user.uid, (data) => {
-            setHabits(data);
-            setLoading(false);
-        });
+        setLoading(true);
+        setError(null);
+
+        const unsubscribe = subscribeToHabits(
+            user.uid,
+            (data) => {
+                setHabits(data);
+                setLoading(false);
+            },
+            (err) => {
+                console.error("Habit subscription error:", err);
+                setError("Failed to load habits.");
+                setLoading(false);
+            }
+        );
         return unsubscribe;
     }, [user]);
 
@@ -341,6 +357,14 @@ export default function HabitGridView() {
         );
     }
 
+    if (error) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <p className="text-red-500 dark:text-red-400">{error}</p>
+            </div>
+        );
+    }
+
     const dates = Array.from({ length: DAYS_TO_SHOW }, (_, i) => {
         // Reverse order: Today is first (index 0), then past days
         return subDays(endDate, i);
@@ -376,7 +400,7 @@ export default function HabitGridView() {
                         <div className="grid" style={{ gridTemplateColumns: `repeat(${DAYS_TO_SHOW}, 1fr)` }}>
                             {dates.map(date => (
                                 <div key={date.toISOString()} className={cn(
-                                    "flex flex-col items-center justify-center py-2 px-1 text-xs border-l border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors",
+                                    "flex flex-col items-center justify-center py-2 px-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors",
                                     isToday(date) && "bg-blue-50 dark:bg-blue-900/10"
                                 )}>
                                     <span className="text-gray-400 font-medium">{format(date, 'EEE')}</span>

@@ -4,4 +4,5 @@
     <string name="title_activity_main">Stride</string>
     <string name="package_name">com.example.stride</string>
     <string name="custom_url_scheme">com.example.stride</string>
+    <string name="google_client_id">183255939378-g58pvmqmuujm7nhsu5ptrl5rl5oitc5f.apps.googleusercontent.com</string>
 </resources>

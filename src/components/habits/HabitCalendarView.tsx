@@ -126,9 +126,10 @@ function SortableCalendarCard({ habit, currentMonth, days, handleDayClick, onCon
                                 }
                             }
 
-                            // Map streak to opacity: 1 day = 0.4, 7 days = 0.7, 30 days = 1.0
+                            // Map streak to opacity: 1 day = 0.2, 10 days = 1.0 (Quadratic)
                             if (habit.habitType === 'simple') {
-                                const intensity = Math.min(1, 0.4 + (tempStreak / 14) * 0.6);
+                                const ratio = Math.min(tempStreak, 10) / 10;
+                                const intensity = Math.min(1, 0.2 + (ratio * ratio) * 0.8);
                                 cellOpacity = intensity;
                             }
                         }
@@ -213,6 +214,7 @@ export default function HabitCalendarView() {
     const { user } = useAuth();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [viewMode, setViewMode] = useState<ViewMode>('detailed');
 
@@ -230,10 +232,21 @@ export default function HabitCalendarView() {
 
     useEffect(() => {
         if (!user) return;
-        const unsubscribe = subscribeToHabits(user.uid, (data) => {
-            setHabits(data);
-            setLoading(false);
-        });
+        setLoading(true);
+        setError(null);
+
+        const unsubscribe = subscribeToHabits(
+            user.uid,
+            (data) => {
+                setHabits(data);
+                setLoading(false);
+            },
+            (err) => {
+                console.error("Habit subscription error:", err);
+                setError("Failed to load habits.");
+                setLoading(false);
+            }
+        );
         return unsubscribe;
     }, [user]);
 
@@ -328,6 +341,14 @@ export default function HabitCalendarView() {
         return (
             <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <p className="text-red-500 dark:text-red-400">{error}</p>
             </div>
         );
     }
@@ -465,7 +486,8 @@ export default function HabitCalendarView() {
                                                                 break;
                                                             }
                                                         }
-                                                        opacity = Math.max(0.3, Math.min(1, 0.4 + (tempStreak / 14) * 0.6));
+                                                        const ratio = Math.min(tempStreak, 10) / 10;
+                                                        opacity = Math.max(0.2, Math.min(1, 0.2 + (ratio * ratio) * 0.8));
                                                         style = { backgroundColor: habitColor, opacity };
                                                     } else {
                                                         bgClass = "bg-gray-300 dark:bg-gray-600";
