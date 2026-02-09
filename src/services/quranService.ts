@@ -104,7 +104,7 @@ export const removePageMemorization = async (userId: string, pageNumber: number,
     });
 };
 
-export const removeMultiplePagesMemorization = async (userId: string, pageNumbers: number[], progress: QuranProgress | null) => {
+export const removeMultiplePagesMemorization = async (userId: string, pageNumbers: number[]) => {
     const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
 
     // Create an update object with deleteField for each page

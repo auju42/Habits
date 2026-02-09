@@ -86,7 +86,7 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
         setImporting(true);
         try {
             const { removeMultiplePagesMemorization } = await import('../../services/quranService');
-            await removeMultiplePagesMemorization(userId, lastImportedPages, progress);
+            await removeMultiplePagesMemorization(userId, lastImportedPages);
             setResult(null);
             setLastImportedPages([]);
         } catch (error) {
