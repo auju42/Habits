@@ -104,6 +104,21 @@ export const removePageMemorization = async (userId: string, pageNumber: number,
     });
 };
 
+export const removeMultiplePagesMemorization = async (userId: string, pageNumbers: number[], progress: QuranProgress | null) => {
+    const docRef = doc(db, `users/${userId}/${COLLECTION_NAME}/main`);
+
+    // Create an update object with deleteField for each page
+    const updates: Record<string, any> = {
+        updatedAt: serverTimestamp()
+    };
+
+    pageNumbers.forEach(page => {
+        updates[`memorizedPages.${page}`] = deleteField();
+    });
+
+    await updateDoc(docRef, updates);
+};
+
 export const removeJuzReview = async (userId: string, juzNumber: number, date: string, progress: QuranProgress | null) => {
     if (!progress?.juzReviews?.[juzNumber]) return;
 

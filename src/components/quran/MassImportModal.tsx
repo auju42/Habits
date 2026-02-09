@@ -21,6 +21,8 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
     const [importing, setImporting] = useState(false);
     const [result, setResult] = useState<{ success: number; failed: number } | null>(null);
 
+    const [lastImportedPages, setLastImportedPages] = useState<number[]>([]);
+
     const handleJuzToggle = (juz: number) => {
         setSelectedJuz(prev =>
             prev.includes(juz)
@@ -32,6 +34,7 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
     const handleImport = async () => {
         setImporting(true);
         setResult(null);
+        setLastImportedPages([]);
 
         const pagesToUpdate: Record<number, string> = {};
 
@@ -66,9 +69,29 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
             await markMultiplePagesAsMemorized(userId, pagesToUpdate, progress);
             const count = Object.keys(pagesToUpdate).length;
             setResult({ success: count, failed: 0 });
+            setLastImportedPages(Object.keys(pagesToUpdate).map(Number));
         } catch (error) {
             console.error('Mass import failed:', error);
             setResult({ success: 0, failed: Object.keys(pagesToUpdate).length });
+        }
+        setImporting(false);
+    };
+
+    const handleUndo = async () => {
+        if (lastImportedPages.length === 0) return;
+
+        const confirmUndo = window.confirm(`Are you sure you want to undo the import of ${lastImportedPages.length} pages?`);
+        if (!confirmUndo) return;
+
+        setImporting(true);
+        try {
+            const { removeMultiplePagesMemorization } = await import('../../services/quranService');
+            await removeMultiplePagesMemorization(userId, lastImportedPages, progress);
+            setResult(null);
+            setLastImportedPages([]);
+        } catch (error) {
+            console.error('Undo failed:', error);
+            alert('Failed to undo import');
         }
         setImporting(false);
     };
@@ -154,6 +177,9 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {selectedJuz.length} Juz selected ({selectedJuz.reduce((sum, juz) => sum + getJuzPageRange(juz).total, 0)} pages)
                             </p>
+                            <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                                Note: This imports all pages of the selected Juz under the selected date.
+                            </div>
                         </>
                     ) : (
                         <>
@@ -171,13 +197,21 @@ export default function MassImportModal({ userId, progress, onClose }: Props) {
                     )}
 
                     {result && (
-                        <div className="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                        <div className="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
                             <div className="text-sm">
                                 <span className="text-green-600 dark:text-green-400 font-semibold">✓ {result.success} pages imported</span>
                                 {result.failed > 0 && (
                                     <span className="text-red-600 dark:text-red-400 font-semibold ml-3">✗ {result.failed} failed</span>
                                 )}
                             </div>
+                            {result.success > 0 && lastImportedPages.length > 0 && (
+                                <button
+                                    onClick={handleUndo}
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium underline"
+                                >
+                                    Undo Import
+                                </button>
+                            )}
                         </div>
                     )}
 
