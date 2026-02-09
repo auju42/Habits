@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { CheckCircle2, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 
 export default function Login() {
     const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsGuest, user } = useAuth();
@@ -10,6 +12,7 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [resetSent, setResetSent] = useState(false);
 
     if (user) {
         return <Navigate to="/" />;
@@ -36,6 +39,28 @@ export default function Login() {
                 setError('Password should be at least 6 characters.');
             } else {
                 setError('Failed to sign in. Please try again.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePasswordReset = async () => {
+        if (!email) {
+            setError('Please enter your email address first.');
+            return;
+        }
+        setError(null);
+        setLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setResetSent(true);
+        } catch (err: any) {
+            console.error(err);
+            if (err.code === 'auth/user-not-found') {
+                setError('No account found with this email.');
+            } else {
+                setError('Failed to send reset email. Please try again.');
             }
         } finally {
             setLoading(false);
@@ -102,6 +127,23 @@ export default function Login() {
                     >
                         {loading ? <Loader2 size={18} className="animate-spin" /> : (isSignUp ? 'Sign Up' : 'Sign In')}
                     </button>
+
+                    {!isSignUp && (
+                        <div className="text-center">
+                            {resetSent ? (
+                                <span className="text-green-400 text-sm">Password reset email sent!</span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handlePasswordReset}
+                                    disabled={loading}
+                                    className="text-sm text-gray-400 hover:text-blue-400 transition-colors"
+                                >
+                                    Forgot password?
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </form>
 
                 <div className="relative mb-6">
