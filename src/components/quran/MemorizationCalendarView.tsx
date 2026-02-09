@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths, subWeeks, addWeeks, startOfWeek, endOfWeek, subYears, addYears, startOfYear, endOfYear, eachMonthOfInterval, isSameMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths, startOfWeek, endOfWeek, subYears, addYears, startOfYear, endOfYear, eachMonthOfInterval, isSameMonth } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar, LayoutGrid } from 'lucide-react';
 import type { QuranProgress } from '../../types/quran';
 
