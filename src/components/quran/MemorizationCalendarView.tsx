@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths, startOfWeek, endOfWeek, subQuarters, addQuarters, startOfQuarter, endOfQuarter, eachMonthOfInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths, subWeeks, addWeeks, startOfWeek, endOfWeek, subYears, addYears, startOfYear, endOfYear, eachMonthOfInterval, isSameMonth } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar, LayoutGrid } from 'lucide-react';
 import type { QuranProgress } from '../../types/quran';
 
@@ -7,7 +7,7 @@ interface Props {
     progress: QuranProgress | null;
 }
 
-type ViewMode = 'monthly' | 'quarterly';
+type ViewMode = 'monthly' | 'yearly';
 
 export default function MemorizationCalendarView({ progress }: Props) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -22,23 +22,22 @@ export default function MemorizationCalendarView({ progress }: Props) {
         });
     }
 
-    // Calculate stats for the current view period
-    const calculateStats = () => {
-        const now = new Date();
+    // Calculate stats for the SELECTED month (only in monthly view)
+    const calculateStatsForMonth = (month: Date) => {
+        const monthStart = startOfMonth(month);
+        const monthEnd = endOfMonth(month);
 
-        // Pages this week
-        const weekStart = startOfWeek(now);
-        const weekEnd = endOfWeek(now);
+        // Find the week containing the first day of the month for "this week" context
+        const weekStart = startOfWeek(monthStart);
+        const weekEnd = endOfWeek(monthStart);
+
         let pagesThisWeek = 0;
         eachDayOfInterval({ start: weekStart, end: weekEnd }).forEach(day => {
             const dateStr = format(day, 'yyyy-MM-dd');
             const count = pagesPerDay[dateStr] || 0;
-            if (count <= 20) pagesThisWeek += count; // Exclude outliers
+            if (count <= 20) pagesThisWeek += count;
         });
 
-        // Pages this month
-        const monthStart = startOfMonth(now);
-        const monthEnd = endOfMonth(now);
         let pagesThisMonth = 0;
         eachDayOfInterval({ start: monthStart, end: monthEnd }).forEach(day => {
             const dateStr = format(day, 'yyyy-MM-dd');
@@ -49,13 +48,13 @@ export default function MemorizationCalendarView({ progress }: Props) {
         return { pagesThisWeek, pagesThisMonth };
     };
 
-    const { pagesThisWeek, pagesThisMonth } = calculateStats();
+    const stats = viewMode === 'monthly' ? calculateStatsForMonth(currentMonth) : null;
 
     const prevPeriod = () => {
         if (viewMode === 'monthly') {
             setCurrentMonth(subMonths(currentMonth, 1));
         } else {
-            setCurrentMonth(subQuarters(currentMonth, 1));
+            setCurrentMonth(subYears(currentMonth, 1));
         }
     };
 
@@ -63,7 +62,7 @@ export default function MemorizationCalendarView({ progress }: Props) {
         if (viewMode === 'monthly') {
             setCurrentMonth(addMonths(currentMonth, 1));
         } else {
-            setCurrentMonth(addQuarters(currentMonth, 1));
+            setCurrentMonth(addYears(currentMonth, 1));
         }
     };
 
@@ -109,15 +108,15 @@ export default function MemorizationCalendarView({ progress }: Props) {
         );
     };
 
-    // Quarterly view rendering
-    const renderQuarterlyView = () => {
-        const quarterStart = startOfQuarter(currentMonth);
-        const quarterEnd = endOfQuarter(currentMonth);
-        const monthsInQuarter = eachMonthOfInterval({ start: quarterStart, end: quarterEnd });
+    // Yearly view rendering
+    const renderYearlyView = () => {
+        const yearStart = startOfYear(currentMonth);
+        const yearEnd = endOfYear(currentMonth);
+        const monthsInYear = eachMonthOfInterval({ start: yearStart, end: yearEnd });
 
         return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {monthsInQuarter.map(month => {
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                {monthsInYear.map(month => {
                     const mStart = startOfMonth(month);
                     const mEnd = endOfMonth(month);
                     const daysInMonth = eachDayOfInterval({ start: mStart, end: mEnd });
@@ -129,13 +128,18 @@ export default function MemorizationCalendarView({ progress }: Props) {
                         monthTotal += pagesPerDay[dateStr] || 0;
                     });
 
+                    const isCurrentMonth = isSameMonth(month, new Date());
+
                     return (
-                        <div key={format(month, 'yyyy-MM')} className="bg-white/5 rounded-lg p-2">
-                            <div className="text-xs font-medium text-blue-100 mb-2 flex justify-between">
-                                <span>{format(month, 'MMMM')}</span>
-                                <span className="bg-white/20 px-1.5 rounded">{monthTotal}p</span>
+                        <div
+                            key={format(month, 'yyyy-MM')}
+                            className={`bg-white/5 rounded-lg p-2 ${isCurrentMonth ? 'ring-1 ring-white/30' : ''}`}
+                        >
+                            <div className="text-xs font-medium text-blue-100 mb-1.5 flex justify-between">
+                                <span>{format(month, 'MMM')}</span>
+                                <span className="bg-white/20 px-1 rounded text-[10px]">{monthTotal}p</span>
                             </div>
-                            <div className="grid grid-cols-7 gap-0.5">
+                            <div className="grid grid-cols-7 gap-px">
                                 {Array.from({ length: startDayOffset }).map((_, i) => (
                                     <div key={`empty-${i}`} className="aspect-square" />
                                 ))}
@@ -147,9 +151,9 @@ export default function MemorizationCalendarView({ progress }: Props) {
                                         <div
                                             key={dateStr}
                                             className={`
-                                                aspect-square rounded-sm flex items-center justify-center text-[8px] transition-all
+                                                aspect-square rounded-sm
                                                 ${count > 0
-                                                    ? 'bg-white text-blue-600 font-bold'
+                                                    ? 'bg-white'
                                                     : 'bg-white/10'}
                                             `}
                                             title={count > 0 ? `${count} page(s)` : ''}
@@ -166,7 +170,7 @@ export default function MemorizationCalendarView({ progress }: Props) {
 
     const periodLabel = viewMode === 'monthly'
         ? format(currentMonth, 'MMM yyyy')
-        : `Q${Math.ceil((currentMonth.getMonth() + 1) / 3)} ${format(currentMonth, 'yyyy')}`;
+        : format(currentMonth, 'yyyy');
 
     return (
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-lg shadow-blue-500/20">
@@ -186,9 +190,9 @@ export default function MemorizationCalendarView({ progress }: Props) {
                             <Calendar size={14} />
                         </button>
                         <button
-                            onClick={() => setViewMode('quarterly')}
-                            className={`p-1.5 rounded transition ${viewMode === 'quarterly' ? 'bg-white/20' : 'hover:bg-white/10'}`}
-                            title="Quarterly View"
+                            onClick={() => setViewMode('yearly')}
+                            className={`p-1.5 rounded transition ${viewMode === 'yearly' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                            title="Yearly View"
                         >
                             <LayoutGrid size={14} />
                         </button>
@@ -199,7 +203,7 @@ export default function MemorizationCalendarView({ progress }: Props) {
                         <button onClick={prevPeriod} className="p-1 hover:bg-white/20 rounded transition">
                             <ChevronLeft size={16} />
                         </button>
-                        <span className="text-sm font-medium min-w-[90px] text-center">
+                        <span className="text-sm font-medium min-w-[70px] text-center">
                             {periodLabel}
                         </span>
                         <button onClick={nextPeriod} className="p-1 hover:bg-white/20 rounded transition">
@@ -210,27 +214,25 @@ export default function MemorizationCalendarView({ progress }: Props) {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Stats Column */}
-                <div className="space-y-4">
-                    <div className="bg-white/10 rounded-lg p-3">
-                        <div className="text-xs text-blue-100 mb-1">Consistency</div>
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-baseline">
-                                <span className="text-xs opacity-80">This Week</span>
-                                <span className="text-xl font-bold">{pagesThisWeek}</span>
-                            </div>
-                            <div className="flex justify-between items-baseline">
-                                <span className="text-xs opacity-80">This Month</span>
-                                <span className="text-xl font-bold">{pagesThisMonth}</span>
+            <div className={`grid gap-6 ${viewMode === 'monthly' ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
+                {/* Stats Column - Only in Monthly View */}
+                {viewMode === 'monthly' && stats && (
+                    <div className="space-y-4">
+                        <div className="bg-white/10 rounded-lg p-3">
+                            <div className="text-xs text-blue-100 mb-1">Consistency</div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-baseline">
+                                    <span className="text-xs opacity-80">This Month</span>
+                                    <span className="text-xl font-bold">{stats.pagesThisMonth}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Calendar Grid */}
-                <div className="lg:col-span-2">
-                    {viewMode === 'monthly' ? renderMonthlyView() : renderQuarterlyView()}
+                <div className={viewMode === 'monthly' ? 'lg:col-span-2' : ''}>
+                    {viewMode === 'monthly' ? renderMonthlyView() : renderYearlyView()}
                 </div>
             </div>
         </div>
