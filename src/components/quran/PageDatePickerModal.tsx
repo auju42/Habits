@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { X, Calendar } from 'lucide-react';
+import { X } from 'lucide-react';
+import SmartDatePicker from '../common/SmartDatePicker';
 
 interface Props {
     pageNumber: number;
@@ -43,19 +44,11 @@ export default function PageDatePickerModal({ pageNumber, isMemorized, memorized
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <Calendar size={16} className="inline mr-2" />
-                                Memorization Date
-                            </label>
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                max={format(new Date(), 'yyyy-MM-dd')}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            />
-                        </div>
+                        <SmartDatePicker
+                            value={selectedDate}
+                            onChange={setSelectedDate}
+                            max={format(new Date(), 'yyyy-MM-dd')}
+                        />
                         <button
                             onClick={() => onConfirm(selectedDate)}
                             className="w-full py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-md transition font-medium"

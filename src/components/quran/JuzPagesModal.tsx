@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { X, Droplets, Calendar } from 'lucide-react';
+import { X, Droplets } from 'lucide-react';
 import { getJuzPageRange } from '../../types/quran';
 import type { QuranProgress, JuzStrength } from '../../types/quran';
+import SmartDatePicker from '../common/SmartDatePicker';
 
 interface Props {
     juzNumber: number;
@@ -172,24 +173,18 @@ export default function JuzPagesModal({ juzNumber, progress, onMarkPage, onRemov
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            <Calendar size={14} className="inline mr-2" />
-                                            Date Memorized
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={selectedDate}
-                                            onChange={(e) => setSelectedDate(e.target.value)}
-                                            max={format(new Date(), 'yyyy-MM-dd')}
-                                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                            💡 Tip: Change the date if you memorized this page in the past
-                                        </p>
-                                    </div>
+
+                                    <SmartDatePicker
+                                        value={selectedDate}
+                                        onChange={setSelectedDate}
+                                        max={format(new Date(), 'yyyy-MM-dd')}
+                                    />
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                        💡 Tip: You can type dates like "23/04/2015" or use quick selects
+                                    </p>
                                     <button
                                         onClick={handleConfirm}
+
                                         className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg transition font-medium shadow-md"
                                     >
                                         Mark as Memorized
